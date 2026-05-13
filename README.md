@@ -159,6 +159,7 @@ npm.cmd run dev
 
 See:
 
+- `docs/beginner-guide.md`
 - `docs/testnet-deployment.md`
 - `docs/production-checklist.md`
 - `docs/audit-notes.md`
