@@ -7,8 +7,8 @@ import { TerminalPanel } from "@/components/shared/Primitives";
 export function MiniLineChart({ data, color = "#18f0ff" }: { data: number[]; color?: string }) {
   const chartData = data.map((value, index) => ({ index, value }));
   return (
-    <div className="h-20 w-full">
-      <ResponsiveContainer>
+    <div className="h-20 min-h-20 w-full min-w-0">
+      <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
         <AreaChart data={chartData}>
           <Area type="monotone" dataKey="value" stroke={color} fill={color} fillOpacity={0.15} strokeWidth={2} />
         </AreaChart>
@@ -27,8 +27,8 @@ export function RewardChart() {
   ];
   return (
     <TerminalPanel title="Reward Distribution Chart">
-      <div className="h-56">
-        <ResponsiveContainer>
+      <div className="h-56 min-h-56 w-full min-w-0">
+        <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
           <BarChart data={data}>
             <CartesianGrid stroke="rgba(148,163,184,.12)" vertical={false} />
             <XAxis dataKey="name" stroke="#64748b" fontSize={11} />

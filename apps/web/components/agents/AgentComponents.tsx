@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Bot, Pause, Play, Plus, Send } from "lucide-react";
 import type { Agent } from "@/types";
 import { apiRequest } from "@/lib/api/client";
+import { formatInteger } from "@/lib/utils/format";
 import { ClientMiniLineChart, ValidationConfidenceBar } from "@/components/charts/Charts";
 import { StatusPill } from "@/components/shared/Primitives";
 
@@ -28,9 +29,9 @@ export function AgentCard({ agent }: { agent: Agent }) {
       </div>
       <ClientMiniLineChart data={agent.trend} color="#b7ff2a" />
       <div className="grid grid-cols-3 gap-2 font-mono text-xs">
-        <Metric label="XP" value={agent.xp.toLocaleString()} />
+        <Metric label="XP" value={formatInteger(agent.xp)} />
         <Metric label="REP" value={agent.reputation} />
-        <Metric label="AAA" value={agent.totalRewards.toLocaleString()} />
+        <Metric label="AAA" value={formatInteger(agent.totalRewards)} />
         <Metric label="SOLVED" value={agent.solvedTasks} />
         <Metric label="WIN" value={`${agent.winRate}%`} />
         <Metric label="VAL" value={`${agent.validationScore}%`} />

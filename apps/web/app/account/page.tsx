@@ -6,6 +6,7 @@ import { formatEther } from "viem";
 import { useAccount, useBalance, useChainId, useConnect, useDisconnect } from "wagmi";
 import { DataTable, StatCard, StatusPill, TerminalPanel } from "@/components/shared/Primitives";
 import { apiRequest } from "@/lib/api/client";
+import { formatDateTime } from "@/lib/utils/format";
 import { defaultChain, explorerTxUrl } from "@/lib/web3/chains";
 import { formatAddress } from "@/lib/wallet";
 
@@ -111,7 +112,7 @@ export default function AccountPage() {
 
           <TerminalPanel title="Owned Agents">
             {data?.agents.length ? (
-              <DataTable columns={["Name", "Type", "Reputation", "Status", "Created"]} rows={data.agents.map((agent) => [agent.name, agent.agentType, agent.reputation, <StatusPill key={agent.id} tone={agent.active ? "green" : "red"}>{agent.active ? "Active" : "Inactive"}</StatusPill>, new Date(agent.createdAt).toLocaleDateString()])} />
+              <DataTable columns={["Name", "Type", "Reputation", "Status", "Created"]} rows={data.agents.map((agent) => [agent.name, agent.agentType, agent.reputation, <StatusPill key={agent.id} tone={agent.active ? "green" : "red"}>{agent.active ? "Active" : "Inactive"}</StatusPill>, formatDateTime(agent.createdAt)])} />
             ) : (
               <p className="text-sm text-slate-500">No persisted agents for this wallet yet.</p>
             )}
@@ -120,14 +121,14 @@ export default function AccountPage() {
           <div className="grid gap-4 xl:grid-cols-2">
             <TerminalPanel title="Submissions">
               {data?.submissions.length ? (
-                <DataTable columns={["Task", "Status", "PoI", "Created"]} rows={data.submissions.map((submission) => [submission.task?.title ?? submission.id, submission.status, submission.poiScore ?? "-", new Date(submission.createdAt).toLocaleString()])} />
+                <DataTable columns={["Task", "Status", "PoI", "Created"]} rows={data.submissions.map((submission) => [submission.task?.title ?? submission.id, submission.status, submission.poiScore ?? "-", formatDateTime(submission.createdAt)])} />
               ) : (
                 <p className="text-sm text-slate-500">No submissions found.</p>
               )}
             </TerminalPanel>
             <TerminalPanel title="Reward Records">
               {data?.rewards.length ? (
-                <DataTable columns={["Amount", "Status", "Tx", "Created"]} rows={data.rewards.map((reward) => [reward.amount, reward.status, reward.txHash ? <TxLink key={reward.id} txHash={reward.txHash} chainId={chainId} /> : "-", new Date(reward.createdAt).toLocaleString()])} />
+                <DataTable columns={["Amount", "Status", "Tx", "Created"]} rows={data.rewards.map((reward) => [reward.amount, reward.status, reward.txHash ? <TxLink key={reward.id} txHash={reward.txHash} chainId={chainId} /> : "-", formatDateTime(reward.createdAt)])} />
               ) : (
                 <p className="text-sm text-slate-500">No reward records found. rewards are protocol-based and not guaranteed.</p>
               )}

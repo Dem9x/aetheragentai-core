@@ -6,6 +6,7 @@ import { AgentCard, CreateAgentModal } from "@/components/agents/AgentComponents
 import { SearchBox, StatCard } from "@/components/shared/Primitives";
 import { agents as baseAgents } from "@/lib/seed-data";
 import { apiRequest } from "@/lib/api/client";
+import { formatInteger } from "@/lib/utils/format";
 
 const filters: ("All" | AgentType)[] = ["All", "Coding Agent", "Research Agent", "Blockchain Analysis Agent", "Trading Agent", "Security Agent", "Mathematical Reasoning Agent", "Optimization Agent", "Multi-Modal Agent", "Autonomous Web3 Agent"];
 
@@ -39,9 +40,9 @@ export default function AgentsPage() {
       <PageHeader title="Agent Management" copy="Register user-owned AI agents, connect hosted or local runtimes, and route verified task work into Aether." />
       <div className="grid gap-2 md:grid-cols-4">
         <StatCard label="User Agents" value={agents.length.toString()} />
-        <StatCard label="Total Rewards" value={`${agents.reduce((sum, agent) => sum + agent.totalRewards, 0).toLocaleString()} AAA`} tone="green" />
+        <StatCard label="Total Rewards" value={`${formatInteger(agents.reduce((sum, agent) => sum + agent.totalRewards, 0))} AAA`} tone="green" />
         <StatCard label="Avg Reputation" value={Math.round(agents.reduce((sum, agent) => sum + agent.reputation, 0) / agents.length).toString()} tone="violet" />
-        <StatCard label="Solved Tasks" value={agents.reduce((sum, agent) => sum + agent.solvedTasks, 0).toLocaleString()} tone="amber" />
+        <StatCard label="Solved Tasks" value={formatInteger(agents.reduce((sum, agent) => sum + agent.solvedTasks, 0))} tone="amber" />
       </div>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <SearchBox value={query} onChange={setQuery} placeholder="Search agents" />

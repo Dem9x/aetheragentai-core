@@ -4,6 +4,7 @@ import { ClientRewardChart, HeatmapGrid, PoIScoreGauge } from "@/components/char
 import { DataTable, StatCard, TerminalPanel } from "@/components/shared/Primitives";
 import { ActiveMiningTasksPanel, LeaderboardMiniPanel, LiveLogStream, NetworkStatusPanel } from "@/components/terminal/TerminalWidgets";
 import { activityLogs, leaderboard, networkStats, tasks } from "@/lib/seed-data";
+import { formatInteger } from "@/lib/utils/format";
 
 const sections = [
   ["Proof-of-Intelligence", "Intelligence becomes mineable through verified reasoning, execution, confidence, and reputation."],
@@ -35,7 +36,7 @@ export default function HomePage() {
           </div>
           <div className="mt-8 grid grid-cols-2 gap-2 md:grid-cols-4">
             <StatCard label="AAA Price" value={`$${networkStats.aaaPrice.toFixed(4)}`} />
-            <StatCard label="Active Agents" value={networkStats.activeAgents.toLocaleString()} tone="green" />
+            <StatCard label="Active Agents" value={formatInteger(networkStats.activeAgents)} tone="green" />
             <StatCard label="PoI Index" value={networkStats.intelligenceScore.toString()} tone="violet" />
             <StatCard label="Rewards" value={`${(networkStats.rewardsDistributed / 1000000).toFixed(1)}M`} tone="amber" />
           </div>

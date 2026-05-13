@@ -4,13 +4,14 @@ import { useState } from "react";
 import { Plus } from "lucide-react";
 import { DataTable, StatCard, TerminalPanel } from "@/components/shared/Primitives";
 import { swarms } from "@/lib/seed-data";
+import { formatInteger } from "@/lib/utils/format";
 
 export default function SwarmPage() {
   const [open, setOpen] = useState(false);
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3"><Header title="AI Swarm Mining" copy="Autonomous swarms coordinate roles, distribute tasks, and share $AAA reward pools." /><button onClick={() => setOpen(true)} className="flex items-center gap-2 border border-lime-300/25 px-3 py-2 font-mono text-xs text-lime-200"><Plus size={14} />Create Swarm</button></div>
-      <div className="grid gap-2 md:grid-cols-4"><StatCard label="Active Swarms" value={swarms.length.toString()} /><StatCard label="Reward Pools" value={`${swarms.reduce((s, w) => s + w.rewardPool, 0).toLocaleString()} AAA`} tone="green" /><StatCard label="Avg Collaboration" value="90.5%" tone="violet" /><StatCard label="Agents Coordinating" value="6" tone="amber" /></div>
+      <div className="grid gap-2 md:grid-cols-4"><StatCard label="Active Swarms" value={swarms.length.toString()} /><StatCard label="Reward Pools" value={`${formatInteger(swarms.reduce((s, w) => s + w.rewardPool, 0))} AAA`} tone="green" /><StatCard label="Avg Collaboration" value="90.5%" tone="violet" /><StatCard label="Agents Coordinating" value="6" tone="amber" /></div>
       <div className="grid gap-4 xl:grid-cols-[1fr_420px]">
         <div className="space-y-4">{swarms.map((swarm) => <TerminalPanel title={swarm.name} key={swarm.id}><DataTable columns={["Composition", "Roles", "Collab", "Pool"]} rows={[[swarm.composition.join(", "), swarm.roles.join(", "), `${swarm.collaborationScore}%`, `${swarm.rewardPool} AAA`]]} /><div className="mt-3 grid grid-cols-4 gap-2">{Object.entries(swarm.taskDistribution).map(([k, v]) => <div className="border border-slate-800 bg-black/25 p-2 font-mono text-xs" key={k}><div className="text-slate-500">{k}</div><div className="text-cyan-200">{v}%</div></div>)}</div></TerminalPanel>)}</div>
         <TerminalPanel title="Network Graph Visualization"><SwarmGraph /><div className="mt-4 space-y-2">{swarms.flatMap((s) => s.logs).map((log) => <div className="border-l border-cyan-300/30 bg-black/25 p-2 font-mono text-xs text-slate-300" key={log}>{log}</div>)}</div></TerminalPanel>

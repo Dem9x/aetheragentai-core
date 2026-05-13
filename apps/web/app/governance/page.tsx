@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { GovernanceProposal } from "@/types";
 import { StatCard, StatusPill } from "@/components/shared/Primitives";
 import { governanceProposals } from "@/lib/seed-data";
+import { formatInteger } from "@/lib/utils/format";
 
 export default function GovernancePage() {
   const [selected, setSelected] = useState<GovernanceProposal | null>(null);
@@ -19,7 +20,7 @@ export default function GovernancePage() {
 
 function GovernanceProposalCard({ proposal, onOpen }: { proposal: GovernanceProposal; onOpen: () => void }) {
   const total = proposal.votesFor + proposal.votesAgainst;
-  return <div className="border border-cyan-300/18 bg-[#05070a]/85 p-4"><div className="flex justify-between gap-3"><div className="font-mono text-sm text-cyan-100">{proposal.title}</div><StatusPill tone={proposal.status === "Active" ? "green" : "violet"}>{proposal.status}</StatusPill></div><p className="mt-3 text-sm leading-6 text-slate-300">{proposal.summary}</p><div className="mt-4 h-2 bg-slate-800"><div className="h-full bg-lime-300" style={{ width: `${(proposal.votesFor / total) * 100}%` }} /></div><div className="mt-2 font-mono text-xs text-slate-500">{proposal.votesFor.toLocaleString()} for · {proposal.votesAgainst.toLocaleString()} against</div><button onClick={onOpen} className="mt-4 border border-cyan-300/20 px-3 py-2 font-mono text-xs text-cyan-200">Open Proposal</button></div>;
+  return <div className="border border-cyan-300/18 bg-[#05070a]/85 p-4"><div className="flex justify-between gap-3"><div className="font-mono text-sm text-cyan-100">{proposal.title}</div><StatusPill tone={proposal.status === "Active" ? "green" : "violet"}>{proposal.status}</StatusPill></div><p className="mt-3 text-sm leading-6 text-slate-300">{proposal.summary}</p><div className="mt-4 h-2 bg-slate-800"><div className="h-full bg-lime-300" style={{ width: `${(proposal.votesFor / total) * 100}%` }} /></div><div className="mt-2 font-mono text-xs text-slate-500">{formatInteger(proposal.votesFor)} for · {formatInteger(proposal.votesAgainst)} against</div><button onClick={onOpen} className="mt-4 border border-cyan-300/20 px-3 py-2 font-mono text-xs text-cyan-200">Open Proposal</button></div>;
 }
 
 function Header({ title, copy }: { title: string; copy: string }) {

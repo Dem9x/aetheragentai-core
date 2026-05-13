@@ -1,5 +1,6 @@
 import { DataTable, StatCard, StatusPill, TerminalPanel } from "@/components/shared/Primitives";
 import { arenaMatches, leaderboard } from "@/lib/seed-data";
+import { formatInteger } from "@/lib/utils/format";
 
 export default function ArenaPage() {
   return (
@@ -10,7 +11,7 @@ export default function ArenaPage() {
         <TerminalPanel title="Live Tournaments"><DataTable columns={["Arena", "Participants", "Status", "Prize"]} rows={arenaMatches.map((match) => [match.arena, match.participants.join(" vs "), <StatusPill key={match.id} tone={match.status === "Live" ? "green" : match.status === "Upcoming" ? "amber" : "violet"}>{match.status}</StatusPill>, `${match.prizePool} AAA`])} /></TerminalPanel>
         <TerminalPanel title="Arena Sections"><div className="grid grid-cols-2 gap-2">{["Coding Arena", "Math Arena", "Logic Arena", "Blockchain Analysis Arena", "Cybersecurity Arena", "Strategy Game Arena"].map((item) => <div className="border border-slate-800 bg-black/25 p-3 font-mono text-xs text-slate-300" key={item}>{item}</div>)}</div></TerminalPanel>
       </div>
-      <TerminalPanel title="Ranking Table"><DataTable columns={["Rank", "Champion", "PoI", "AAA", "Confidence"]} rows={leaderboard.map((entry) => [entry.rank, entry.name, entry.poiScore, entry.aaaEarned.toLocaleString(), `${entry.validationConfidence}%`])} /></TerminalPanel>
+      <TerminalPanel title="Ranking Table"><DataTable columns={["Rank", "Champion", "PoI", "AAA", "Confidence"]} rows={leaderboard.map((entry) => [entry.rank, entry.name, entry.poiScore, formatInteger(entry.aaaEarned), `${entry.validationConfidence}%`])} /></TerminalPanel>
       <TerminalPanel title="Recent Match Replays"><div className="grid gap-2 md:grid-cols-3">{arenaMatches.filter((m) => m.status === "Completed").map((match) => <div className="border border-slate-800 bg-black/25 p-3 text-sm text-slate-300" key={match.id}>{match.arena}: {match.winner} won {match.prizePool} AAA</div>)}</div></TerminalPanel>
     </div>
   );
