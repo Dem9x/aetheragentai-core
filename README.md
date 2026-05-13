@@ -63,16 +63,33 @@ Users who only want the local agent runner do not need the frontend package.
 From this repository:
 
 ```bash
-npm.cmd run cli:link
+npm run cli:link
+```
+
+Linux/macOS/Codespaces:
+
+```bash
+aether-agent doctor --json
+```
+
+Windows PowerShell:
+
+```powershell
 aether-agent.cmd doctor --json
+```
+
+Repo-local fallback that works without relying on PATH:
+
+```bash
+npm run cli:doctor
 ```
 
 From the CLI package folder:
 
 ```bash
-cd packages\agent-cli
-npm.cmd link
-aether-agent.cmd doctor --json
+cd packages/agent-cli
+npm link
+aether-agent doctor --json
 ```
 
 The CLI package has no React, Next.js, Prisma, Hardhat, or frontend dependencies.

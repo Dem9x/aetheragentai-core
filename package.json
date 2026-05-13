@@ -23,6 +23,8 @@
     "contracts:deploy:local": "npm run deploy:local --prefix packages/contracts",
     "contracts:deploy:base-sepolia": "npm run deploy:base-sepolia --prefix packages/contracts",
     "cli:link": "npm link -w @aetheragentai/agent-cli",
+    "cli:doctor": "node packages/agent-cli/index.mjs doctor --json",
+    "cli:help": "node packages/agent-cli/index.mjs --help",
     "cli:test": "npm test -w @aetheragentai/agent-cli"
   },
   "engines": {

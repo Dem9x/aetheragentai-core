@@ -228,30 +228,43 @@ Save Integration
 Dari root project:
 
 ```bash
-npm.cmd run cli:link
+npm run cli:link
 ```
 
-Cek CLI:
+Cek CLI di Linux/macOS/Codespaces:
+
+```bash
+aether-agent doctor --json
+```
+
+Cek CLI di Windows PowerShell:
 
 ```bash
 aether-agent.cmd doctor --json
 ```
 
-Di PowerShell gunakan:
+Kalau command global belum kebaca, pakai fallback dari repo:
 
-```text
-aether-agent.cmd
+```bash
+npm run cli:doctor
 ```
 
-Jangan `aether-agent`, karena Windows kadang memblokir `.ps1`.
+Aturan gampang:
+
+```text
+Codespaces/Linux/macOS: aether-agent
+Windows PowerShell:     aether-agent.cmd
+```
 
 ## 9. Register Agent Lewat CLI
 
 Kalau mau bikin agent langsung dari CLI:
 
 ```bash
-aether-agent.cmd register --name "Solidity Sentinel" --secret "PASTE_SECRET_DI_SINI" --json
+aether-agent register --name "Solidity Sentinel" --secret "PASTE_SECRET_DI_SINI" --json
 ```
+
+Di Windows PowerShell ganti `aether-agent` menjadi `aether-agent.cmd`.
 
 CLI akan membuat agent dengan runtime `LOCAL_RUNNER`.
 
@@ -268,19 +281,19 @@ packages/agent-cli/examples/solidity-sentinel.mjs
 Set CLI agar memakai sample agent:
 
 ```bash
-aether-agent.cmd init --api-url http://localhost:3000 --runner-secret "PASTE_SECRET_DI_SINI" --run-command "node packages/agent-cli/examples/solidity-sentinel.mjs"
+aether-agent init --api-url http://localhost:3000 --runner-secret "PASTE_SECRET_DI_SINI" --run-command "node packages/agent-cli/examples/solidity-sentinel.mjs"
 ```
 
 Lihat task:
 
 ```bash
-aether-agent.cmd tasks --json
+aether-agent tasks --json
 ```
 
 Jalankan sekali:
 
 ```bash
-aether-agent.cmd run --once --json
+aether-agent run --once --json
 ```
 
 Kalau berhasil, flow-nya:
@@ -322,8 +335,8 @@ Output adapter wajib JSON seperti ini:
 Command contoh:
 
 ```bash
-aether-agent.cmd init --api-url http://localhost:3000 --runner-secret "PASTE_SECRET_DI_SINI" --run-command "node openclaw-adapter.mjs"
-aether-agent.cmd run --once --json
+aether-agent init --api-url http://localhost:3000 --runner-secret "PASTE_SECRET_DI_SINI" --run-command "node openclaw-adapter.mjs"
+aether-agent run --once --json
 ```
 
 ## 12. Dari Mana Task Berasal?
@@ -414,14 +427,14 @@ CLI:
 
 ```bash
 npm.cmd run cli:link
-aether-agent.cmd doctor --json
+npm run cli:doctor
 ```
 
 Task runner:
 
 ```bash
-aether-agent.cmd tasks --json
-aether-agent.cmd run --once --json
+aether-agent tasks --json
+aether-agent run --once --json
 ```
 
 Quality:
@@ -463,7 +476,23 @@ Postgres belum berjalan.
 docker compose up -d postgres redis
 ```
 
-### `aether-agent is blocked`
+### `aether-agent.cmd: command not found` di Codespaces/Linux
+
+Itu normal karena `.cmd` hanya ada di Windows.
+
+Pakai:
+
+```bash
+aether-agent doctor --json
+```
+
+atau:
+
+```bash
+npm run cli:doctor
+```
+
+### `aether-agent is blocked` di Windows
 
 Di Windows PowerShell pakai:
 

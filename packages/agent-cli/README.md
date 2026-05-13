@@ -9,26 +9,66 @@ The agent remains user-owned. Aether routes tasks, validates outputs, and record
 From the repo root:
 
 ```bash
-npm.cmd run cli:link
+npm run cli:link
 ```
 
 Then verify:
 
+Linux/macOS/Codespaces:
+
 ```bash
+aether-agent --help
+aether-agent doctor --json
+```
+
+If the shell does not see the command immediately, run:
+
+```bash
+hash -r
+command -v aether-agent
+```
+
+Windows PowerShell:
+
+```powershell
 aether-agent.cmd --help
 aether-agent.cmd doctor --json
 ```
 
-On Git Bash, `aether-agent` may work directly. In PowerShell, use `aether-agent.cmd` because script execution policy can block the generated `.ps1` wrapper.
+Shortcut that works from this repo after linking:
+
+```bash
+npm run cli:doctor
+```
+
+This shortcut does not require `aether-agent` to be globally visible because it runs `packages/agent-cli/index.mjs` directly.
+
+Important:
+
+- `aether-agent` is the real cross-platform binary name.
+- `aether-agent.cmd` exists only on Windows.
+- In GitHub Codespaces, WSL, Linux, and macOS, use `aether-agent`, not `aether-agent.cmd`.
 
 ## Configure
 
+Linux/macOS/Codespaces example:
+
 ```bash
-aether-agent init ^
-  --api-url http://localhost:3000 ^
-  --agent-id agent-orion ^
-  --runner-secret your-secret ^
-  --run-command "node C:\\path\\to\\my-agent.mjs"
+aether-agent init \
+  --api-url http://localhost:3000 \
+  --agent-id agent-orion \
+  --runner-secret your-secret \
+  --run-command "node /path/to/my-agent.mjs"
+```
+
+Windows PowerShell example:
+
+```powershell
+aether-agent.cmd init `
+  --api-url http://localhost:3000 `
+  --agent-id agent-orion `
+  --runner-secret your-secret `
+  --run-command "node C:\path\to\my-agent.mjs"
 ```
 
 ## Register Agent
@@ -72,6 +112,16 @@ aether-agent run --once --dry-run --json
 
 Smoke-test with the bundled sample agent from the repo root:
 
+Linux/macOS/Codespaces:
+
+```bash
+aether-agent init --api-url http://localhost:3000 --run-command "node packages/agent-cli/examples/solidity-sentinel.mjs"
+aether-agent register --name "Solidity Sentinel" --secret "replace-with-long-random-secret"
+aether-agent run --once --json
+```
+
+Windows PowerShell:
+
 ```bash
 aether-agent.cmd init --api-url http://localhost:3000 --run-command "node packages/agent-cli/examples/solidity-sentinel.mjs"
 aether-agent.cmd register --name "Solidity Sentinel" --secret "replace-with-long-random-secret"
@@ -81,11 +131,17 @@ aether-agent.cmd run --once --json
 ## Submit Manually
 
 ```bash
-aether-agent submit ^
-  --task-id task-api-schema ^
-  --summary "Detected auth bypass risk in schema path." ^
-  --confidence 0.87 ^
+aether-agent submit \
+  --task-id task-api-schema \
+  --summary "Detected auth bypass risk in schema path." \
+  --confidence 0.87 \
   --json
+```
+
+Windows PowerShell uses backticks or one line:
+
+```powershell
+aether-agent.cmd submit --task-id task-api-schema --summary "Detected auth bypass risk in schema path." --confidence 0.87 --json
 ```
 
 ## JSON Policy
