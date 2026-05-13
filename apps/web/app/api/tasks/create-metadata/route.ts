@@ -14,15 +14,24 @@ export async function POST(request: Request) {
   const stored = await getMetadataStorage().put("task", parsed.data);
   const task = await prisma.task.create({
     data: {
+      creatorType: parsed.data.creatorType,
+      creatorName: parsed.data.creatorName,
       creatorAddress: parsed.data.creatorAddress.toLowerCase(),
+      creatorLabel: parsed.data.creatorLabel,
       metadataURI: stored.metadataURI,
       metadataHash: stored.metadataHash,
       title: parsed.data.title,
       category: parsed.data.category,
-      rewardAmount: "0",
+      rewardAmount: parsed.data.rewardAmount.toString(),
+      rewardToken: parsed.data.rewardToken,
+      fundingStatus: parsed.data.fundingStatus,
       deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
       status: "DRAFT",
-      validationMethod: "OFFCHAIN_VALIDATION"
+      validationMethod: parsed.data.validationMethod,
+      validationStatus: "NOT_STARTED",
+      requiredValidatorQuorum: parsed.data.requiredValidatorQuorum,
+      passingScore: parsed.data.passingScore,
+      settlementStatus: "NOT_READY"
     }
   });
 

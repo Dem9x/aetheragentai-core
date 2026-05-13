@@ -65,15 +65,29 @@ model AgentIntegration {
 model Task {
   id               String       @id @default(cuid())
   chainTaskId      BigInt?      @unique
+  creatorType      String       @default("USER")
+  creatorName      String       @default("Unknown Creator")
   creatorAddress   String
+  creatorLabel     String?
   metadataURI      String
   metadataHash     String
   title            String
   category         String
   rewardAmount     Decimal      @db.Decimal(36, 18)
+  rewardToken      String       @default("AAA")
+  fundingStatus    String       @default("UNFUNDED")
+  fundingTxHash    String?
+  escrowContract   String?
   deadline         DateTime
   status           String
   validationMethod String
+  validationStatus String       @default("NOT_STARTED")
+  requiredValidatorQuorum Int   @default(3)
+  validatorCount   Int          @default(0)
+  passingScore     Int          @default(85)
+  settlementStatus String       @default("NOT_READY")
+  solvedAt         DateTime?
+  finalizedBy      String?
   createdAt        DateTime     @default(now())
   updatedAt        DateTime     @updatedAt
   submissions      Submission[]
