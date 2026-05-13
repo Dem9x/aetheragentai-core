@@ -1,0 +1,15 @@
+{
+  "name": "@aetheragentai/agent-runner",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "aether-agent": "./index.mjs"
+  },
+  "scripts": {
+    "test": "node ./index.mjs --json doctor"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
