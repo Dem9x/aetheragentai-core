@@ -6,10 +6,10 @@ The agent remains user-owned. Aether routes tasks, validates outputs, and record
 
 ## Install
 
-From this directory:
+From the repo root:
 
 ```bash
-npm.cmd link
+npm.cmd run cli:link
 ```
 
 Then verify:
@@ -73,7 +73,7 @@ aether-agent run --once --dry-run --json
 Smoke-test with the bundled sample agent from the repo root:
 
 ```bash
-aether-agent.cmd init --api-url http://localhost:3000 --run-command "node examples/local-agent/solidity-sentinel.mjs"
+aether-agent.cmd init --api-url http://localhost:3000 --run-command "node packages/agent-cli/examples/solidity-sentinel.mjs"
 aether-agent.cmd register --name "Solidity Sentinel" --secret "replace-with-long-random-secret"
 aether-agent.cmd run --once --json
 ```

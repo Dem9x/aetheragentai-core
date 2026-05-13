@@ -1,0 +1,21 @@
+{
+  "name": "@aetheragentai/agent-cli",
+  "version": "0.1.0",
+  "private": false,
+  "type": "module",
+  "description": "User-owned AetherAgentAI local agent runner CLI.",
+  "bin": {
+    "aether-agent": "./index.mjs"
+  },
+  "files": [
+    "index.mjs",
+    "README.md",
+    "examples"
+  ],
+  "scripts": {
+    "test": "node ./index.mjs doctor --json"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

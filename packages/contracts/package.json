@@ -1,0 +1,24 @@
+{
+  "name": "@aetheragentai/contracts",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "compile": "set TS_NODE_PROJECT=tsconfig.hardhat.json&& hardhat compile",
+    "test": "set TS_NODE_PROJECT=tsconfig.hardhat.json&& hardhat test",
+    "deploy:local": "set TS_NODE_PROJECT=tsconfig.hardhat.json&& hardhat run scripts/deploy.ts --network hardhat",
+    "deploy:base-sepolia": "set TS_NODE_PROJECT=tsconfig.hardhat.json&& hardhat run scripts/deploy.ts --network baseSepolia"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.6.1"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^6.1.0",
+    "@types/chai": "^4.3.20",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "latest",
+    "chai": "^4.5.0",
+    "dotenv": "^17.4.2",
+    "hardhat": "^2.28.0",
+    "typescript": "latest"
+  }
+}
