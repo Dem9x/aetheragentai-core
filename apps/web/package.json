@@ -44,5 +44,8 @@
     "eslint-config-next": "latest",
     "prisma": "^6.19.0",
     "typescript": "latest"
+  },
+  "overrides": {
+    "postcss": "8.5.14"
   }
 }
