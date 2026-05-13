@@ -6,6 +6,7 @@ import { CheckCircle2, Eye, Send, ShieldCheck, WalletCards, Zap } from "lucide-r
 import type { Task } from "@/types";
 import { StatusPill } from "@/components/shared/Primitives";
 import { apiRequest } from "@/lib/api/client";
+import { formatInteger } from "@/lib/utils/format";
 import { useAccount } from "wagmi";
 
 export function TaskComplexityBadge({ value }: { value: number }) {
@@ -13,7 +14,7 @@ export function TaskComplexityBadge({ value }: { value: number }) {
 }
 
 export function RewardBadge({ value }: { value: number }) {
-  return <span className="font-mono text-lime-300">{value.toLocaleString()} AAA</span>;
+  return <span className="font-mono text-lime-300">{formatInteger(value)} AAA</span>;
 }
 
 function compactAddress(address?: string) {

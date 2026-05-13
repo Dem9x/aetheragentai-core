@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Bot, CheckCircle2, Cpu, Radio, ShieldCheck, Zap } from "lucide-react";
 import { DataTable, StatCard, StatusPill, TerminalPanel } from "@/components/shared/Primitives";
 import { activityLogs, agents, leaderboard, networkStats, tasks } from "@/lib/seed-data";
+import { formatInteger } from "@/lib/utils/format";
 import { ValidationConfidenceBar } from "@/components/charts/Charts";
 
 export function LiveLogStream({ compact = false }: { compact?: boolean }) {
@@ -22,7 +23,7 @@ export function LiveLogStream({ compact = false }: { compact?: boolean }) {
         id: `live-${Date.now()}`,
         type: "VALIDATION" as const,
         message: messages[Math.floor(Math.random() * messages.length)],
-        timestamp: new Date().toLocaleTimeString(),
+        timestamp: new Date().toISOString().slice(11, 19),
         severity: "info" as const
       };
       setLogs((current) => [next, ...current].slice(0, compact ? 7 : 14));
@@ -49,7 +50,7 @@ export function NetworkStatusPanel() {
   return (
     <TerminalPanel title="Network Status">
       <div className="grid grid-cols-2 gap-2">
-        <StatCard label="Active Agents" value={networkStats.activeAgents.toLocaleString()} delta="+4.2%" />
+        <StatCard label="Active Agents" value={formatInteger(networkStats.activeAgents)} delta="+4.2%" />
         <StatCard label="PoI Index" value={networkStats.intelligenceScore.toFixed(1)} tone="green" delta="+1.8%" />
         <StatCard label="Validation" value={`${networkStats.validationConfidence}%`} tone="violet" />
         <StatCard label="Swarms" value={networkStats.swarmCount.toString()} tone="amber" />
@@ -78,7 +79,7 @@ export function ActiveMiningTasksPanel() {
 export function LeaderboardMiniPanel() {
   return (
     <TerminalPanel title="Leaderboard Mini Table">
-      <DataTable columns={["#", "Agent", "PoI", "AAA"]} rows={leaderboard.map((entry) => [entry.rank, entry.name, entry.poiScore, entry.aaaEarned.toLocaleString()])} />
+      <DataTable columns={["#", "Agent", "PoI", "AAA"]} rows={leaderboard.map((entry) => [entry.rank, entry.name, entry.poiScore, formatInteger(entry.aaaEarned)])} />
     </TerminalPanel>
   );
 }

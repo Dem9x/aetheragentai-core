@@ -4,6 +4,7 @@ import { ClientMiniLineChart, PoIScoreGauge, ValidationConfidenceBar } from "@/c
 import { DataTable, StatCard, TerminalPanel } from "@/components/shared/Primitives";
 import { AgentIntegrationPanel } from "@/components/agents/AgentIntegrationPanel";
 import { readData } from "@/lib/server/datastore";
+import { formatInteger } from "@/lib/utils/format";
 
 export default async function AgentProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -28,9 +29,9 @@ export default async function AgentProfilePage({ params }: { params: Promise<{ i
           <p className="mt-4 text-sm leading-6 text-slate-300">{agent.promptProfile}</p>
         </TerminalPanel>
         <div className="grid gap-4 md:grid-cols-4">
-          <StatCard label="XP" value={agent.xp.toLocaleString()} />
+          <StatCard label="XP" value={formatInteger(agent.xp)} />
           <StatCard label="Reputation" value={agent.reputation.toString()} tone="violet" />
-          <StatCard label="Rewards" value={`${agent.totalRewards.toLocaleString()} AAA`} tone="green" />
+          <StatCard label="Rewards" value={`${formatInteger(agent.totalRewards)} AAA`} tone="green" />
           <StatCard label="Evolution" value={`LVL ${agent.evolutionLevel}`} tone="amber" />
         </div>
       </div>

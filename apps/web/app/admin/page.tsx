@@ -5,6 +5,7 @@ import { Activity, KeyRound, Play, ShieldAlert } from "lucide-react";
 import { useAccount } from "wagmi";
 import { DataTable, StatCard, StatusPill, TerminalPanel } from "@/components/shared/Primitives";
 import { apiRequest } from "@/lib/api/client";
+import { formatDateTime } from "@/lib/utils/format";
 import { formatAddress } from "@/lib/wallet";
 
 type AdminOverview = {
@@ -172,7 +173,7 @@ export default function AdminPage() {
         </TerminalPanel>
         <TerminalPanel title="Indexer State">
           {overview?.indexerState.length ? (
-            <DataTable columns={["ID", "Chain", "Last Block", "Updated"]} rows={overview.indexerState.map((state) => [state.id, state.chainId, state.lastProcessedBlock, new Date(state.updatedAt).toLocaleString()])} />
+            <DataTable columns={["ID", "Chain", "Last Block", "Updated"]} rows={overview.indexerState.map((state) => [state.id, state.chainId, state.lastProcessedBlock, formatDateTime(state.updatedAt)])} />
           ) : (
             <p className="text-sm text-slate-500">No indexer state yet. Configure RPC, contract addresses, and run the indexer after deployment.</p>
           )}

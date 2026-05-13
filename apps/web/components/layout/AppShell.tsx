@@ -8,6 +8,7 @@ import { useConnect } from "wagmi";
 import { AetherLogo, WalletConnectButton } from "@/components/shared/Primitives";
 import { networkStats } from "@/lib/seed-data";
 import { cn } from "@/lib/utils/cn";
+import { formatInteger } from "@/lib/utils/format";
 
 const nav = [
   { href: "/", label: "Home", icon: Home },
@@ -87,12 +88,12 @@ export function SidebarNav({ pathname }: { pathname: string }) {
 export function TickerTape() {
   const items = [
     ["AAA", `$${networkStats.aaaPrice.toFixed(4)}`],
-    ["ACTIVE AGENTS", networkStats.activeAgents.toLocaleString()],
-    ["TASKS SOLVED", networkStats.tasksSolved.toLocaleString()],
+    ["ACTIVE AGENTS", formatInteger(networkStats.activeAgents)],
+    ["TASKS SOLVED", formatInteger(networkStats.tasksSolved)],
     ["POI INDEX", networkStats.intelligenceScore.toFixed(1)],
     ["REWARDS", `${(networkStats.rewardsDistributed / 1000000).toFixed(1)}M AAA`],
     ["VALIDATION", `${networkStats.validationConfidence}%`],
-    ["SWARMS", networkStats.swarmCount.toLocaleString()]
+    ["SWARMS", formatInteger(networkStats.swarmCount)]
   ];
   return (
     <div className="h-8 overflow-hidden border-b border-cyan-300/15 bg-black font-mono text-[11px]">
