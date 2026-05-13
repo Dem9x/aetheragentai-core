@@ -1,0 +1,190 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  wallets   Wallet[]
+  agents    Agent[]
+}
+
+model Wallet {
+  id        String   @id @default(cuid())
+  address   String   @unique
+  userId    String?
+  nonce     String?
+  nonceAt   DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User?    @relation(fields: [userId], references: [id])
+}
+
+model Agent {
+  id           String     @id @default(cuid())
+  chainAgentId BigInt?    @unique
+  ownerAddress String
+  userId       String?
+  metadataURI  String
+  metadataHash String
+  name         String
+  agentType    String
+  active       Boolean    @default(true)
+  reputation   Int        @default(0)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  user         User?      @relation(fields: [userId], references: [id])
+  submissions  Submission[]
+  stats        AgentStats?
+  integration  AgentIntegration?
+
+  @@index([ownerAddress])
+}
+
+model AgentIntegration {
+  id                String   @id @default(cuid())
+  agentId           String   @unique
+  runtimeType       String
+  agentEndpoint     String?
+  publicKey         String?
+  webhookSecretHash String?
+  capabilities      String[]
+  status            String   @default("PENDING")
+  lastCheckedAt     DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  agent             Agent    @relation(fields: [agentId], references: [id])
+}
+
+model Task {
+  id               String       @id @default(cuid())
+  chainTaskId      BigInt?      @unique
+  creatorAddress   String
+  metadataURI      String
+  metadataHash     String
+  title            String
+  category         String
+  rewardAmount     Decimal      @db.Decimal(36, 18)
+  deadline         DateTime
+  status           String
+  validationMethod String
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  submissions      Submission[]
+  validations      Validation[]
+  rewards          Reward[]
+  stats            TaskStats?
+
+  @@index([creatorAddress])
+  @@index([status])
+}
+
+model Submission {
+  id                String       @id @default(cuid())
+  chainSubmissionId BigInt?      @unique
+  taskId            String
+  agentId           String?
+  submitterAddress  String
+  solutionURI       String
+  solutionHash      String
+  status            String       @default("SUBMITTED")
+  poiScore          Decimal?     @db.Decimal(8, 2)
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  task              Task         @relation(fields: [taskId], references: [id])
+  agent             Agent?       @relation(fields: [agentId], references: [id])
+  validations       Validation[]
+  rewards           Reward[]
+
+  @@index([taskId])
+  @@index([submitterAddress])
+}
+
+model Validation {
+  id               String     @id @default(cuid())
+  taskId           String
+  submissionId     String
+  validatorAddress String
+  score            Int
+  confidence       Int
+  resultURI        String
+  resultHash       String
+  finalized        Boolean    @default(false)
+  createdAt        DateTime   @default(now())
+  task             Task       @relation(fields: [taskId], references: [id])
+  submission       Submission @relation(fields: [submissionId], references: [id])
+
+  @@unique([submissionId, validatorAddress])
+}
+
+model Reward {
+  id               String      @id @default(cuid())
+  taskId           String?
+  submissionId     String?
+  recipientAddress String
+  amount           Decimal     @db.Decimal(36, 18)
+  status           String
+  txHash           String?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+  task             Task?       @relation(fields: [taskId], references: [id])
+  submission       Submission? @relation(fields: [submissionId], references: [id])
+
+  @@index([recipientAddress])
+}
+
+model IndexedEvent {
+  id              String   @id @default(cuid())
+  chainId         Int
+  contractAddress String
+  eventName       String
+  txHash          String
+  logIndex        Int
+  blockNumber     BigInt
+  blockHash       String
+  confirmed       Boolean  @default(false)
+  payload         Json
+  createdAt       DateTime @default(now())
+
+  @@unique([chainId, txHash, logIndex])
+  @@index([chainId, blockNumber])
+}
+
+model IndexerState {
+  id                 String   @id
+  chainId            Int
+  lastProcessedBlock BigInt
+  updatedAt          DateTime @updatedAt
+}
+
+model AgentStats {
+  id                   String @id @default(cuid())
+  agentId              String @unique
+  solvedTasks          Int    @default(0)
+  totalRewards         Decimal @default(0) @db.Decimal(36, 18)
+  validationConfidence Int    @default(0)
+  poiScore             Int    @default(0)
+  agent                Agent  @relation(fields: [agentId], references: [id])
+}
+
+model TaskStats {
+  id              String @id @default(cuid())
+  taskId          String @unique
+  submissionCount Int    @default(0)
+  validatorCount  Int    @default(0)
+  task            Task   @relation(fields: [taskId], references: [id])
+}
+
+model ActivityLog {
+  id        String   @id @default(cuid())
+  type      String
+  message   String
+  severity  String
+  createdAt DateTime @default(now())
+}

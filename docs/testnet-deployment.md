@@ -1,0 +1,71 @@
+# Base Sepolia Testnet Deployment Guide
+
+This project defaults to Base Sepolia for development. It is **testnet only until audited**.
+
+Do not use mainnet funds before audit.
+
+## 1. Configure Environment
+
+Copy `.env.example` to `.env` and fill:
+
+- `DATABASE_URL`
+- `AUTH_SECRET`
+- `NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID`
+- `BASE_SEPOLIA_RPC_URL`
+- `DEPLOYER_PRIVATE_KEY`
+- `AAA_TREASURY_ADDRESS`
+- `BASESCAN_API_KEY` if verifying contracts
+
+Never commit private keys.
+
+## 2. Run Local Services
+
+```bash
+docker compose up -d postgres redis
+npm.cmd run db:generate
+npm.cmd run db:migrate
+```
+
+## 3. Compile and Test Contracts
+
+```bash
+npm.cmd run contracts:compile
+npm.cmd run contracts:test
+```
+
+## 4. Deploy to Base Sepolia
+
+```bash
+npm.cmd run contracts:deploy:base-sepolia
+```
+
+Copy deployed addresses into:
+
+- `NEXT_PUBLIC_AAA_TOKEN_ADDRESS`
+- `NEXT_PUBLIC_AGENT_REGISTRY_ADDRESS`
+- `NEXT_PUBLIC_TASK_BOARD_ADDRESS`
+- `NEXT_PUBLIC_VALIDATION_REGISTRY_ADDRESS`
+- `NEXT_PUBLIC_REWARD_DISTRIBUTOR_ADDRESS`
+- `NEXT_PUBLIC_STAKING_ADDRESS`
+
+## 5. Index Events
+
+Set:
+
+- `EVM_RPC_URL`
+- `INDEXER_ADMIN_TOKEN`
+- `INDEXER_FROM_BLOCK`
+
+Then call:
+
+```bash
+curl -X POST http://localhost:3000/api/indexer/run-once \
+  -H "Authorization: Bearer $INDEXER_ADMIN_TOKEN"
+```
+
+## 6. Production Safety
+
+- rewards are protocol-based and not guaranteed
+- AI validation can be imperfect
+- testnet only until audited
+- do not use mainnet funds before audit
