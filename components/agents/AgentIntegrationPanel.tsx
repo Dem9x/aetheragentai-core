@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { PlugZap, Radio, Save, Server } from "lucide-react";
+import { KeyRound, PlugZap, Radio, Save, Server, ShieldCheck } from "lucide-react";
 import type { AgentIntegration, AgentRuntimeType } from "@/types";
 import { apiRequest } from "@/lib/api/client";
 import { DataTable, StatusPill, TerminalPanel } from "@/components/shared/Primitives";
@@ -98,18 +98,30 @@ export function AgentIntegrationPanel({ agentId, initial }: { agentId: string; i
           <label className="block font-mono text-xs uppercase text-slate-500">
             Agent Endpoint
             <input value={agentEndpoint} onChange={(event) => setAgentEndpoint(event.target.value)} placeholder="https://your-agent.example.com/aether/run" className="mt-1 w-full border border-cyan-300/20 bg-black/30 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-600" />
+            <span className="mt-1 block text-[10px] normal-case leading-5 text-slate-500">
+              Untuk HOSTED saja. Isi URL HTTPS agent milik user, contoh: https://api.domainmu.com/aether/run. Untuk LOCAL_RUNNER boleh kosong karena CLI yang polling task.
+            </span>
           </label>
           <label className="block font-mono text-xs uppercase text-slate-500">
             Public Key
             <input value={publicKey} onChange={(event) => setPublicKey(event.target.value)} placeholder="agent signing public key or DID" className="mt-1 w-full border border-cyan-300/20 bg-black/30 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-600" />
+            <span className="mt-1 block text-[10px] normal-case leading-5 text-slate-500">
+              Opsional untuk sekarang. Pakai public key agent untuk verifikasi signature output di versi production. Bisa pakai SSH Ed25519 public key, DID, atau wallet-style signing public key. Jangan isi private key.
+            </span>
           </label>
           <label className="block font-mono text-xs uppercase text-slate-500">
             Runner / Webhook Secret
             <input value={webhookSecret} onChange={(event) => setWebhookSecret(event.target.value)} placeholder="stored as hash only" type="password" className="mt-1 w-full border border-cyan-300/20 bg-black/30 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-600" />
+            <span className="mt-1 block text-[10px] normal-case leading-5 text-slate-500">
+              Buat sendiri sebagai token rahasia antara runner user dan Aether. Secret ini disimpan hash-only di Aether, lalu dipakai CLI lewat --secret atau header x-runner-secret.
+            </span>
           </label>
           <label className="block font-mono text-xs uppercase text-slate-500">
             Capabilities
             <input value={capabilities} onChange={(event) => setCapabilities(event.target.value)} placeholder="solidity, audit, research" className="mt-1 w-full border border-cyan-300/20 bg-black/30 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-600" />
+            <span className="mt-1 block text-[10px] normal-case leading-5 text-slate-500">
+              Tag kemampuan agent dipisah koma. Contoh: solidity, audit, reentrancy, python, defi, research. Aether memakai ini untuk matching task.
+            </span>
           </label>
 
           <div className="flex flex-wrap gap-2">
@@ -128,6 +140,16 @@ export function AgentIntegrationPanel({ agentId, initial }: { agentId: string; i
         <div className="space-y-3">
           <div className="border border-amber-300/20 bg-amber-300/8 p-3 text-sm leading-6 text-amber-100">
             Agent tetap milik user. Aether hanya routing task, validasi output, dan settlement reward protocol. Jangan kirim private prompt atau chain-of-thought.
+          </div>
+          <div className="grid gap-2 text-xs leading-5 text-slate-400">
+            <div className="border border-cyan-300/15 bg-cyan-300/5 p-3">
+              <div className="mb-1 flex items-center gap-2 font-mono uppercase text-cyan-100"><ShieldCheck size={13} /> Secret dibuat dari mana?</div>
+              Jalankan <code className="text-cyan-100">node -e &quot;console.log(require(&apos;crypto&apos;).randomBytes(32).toString(&apos;hex&apos;))&quot;</code>, simpan hasilnya di field secret, lalu pakai secret yang sama saat <code className="text-cyan-100">aether-agent.cmd register --secret ...</code>.
+            </div>
+            <div className="border border-violet-300/15 bg-violet-300/5 p-3">
+              <div className="mb-1 flex items-center gap-2 font-mono uppercase text-violet-100"><KeyRound size={13} /> Public key ambil dari mana?</div>
+              Untuk LOCAL_RUNNER boleh kosong dulu. Untuk signing, buat key: <code className="text-violet-100">ssh-keygen -t ed25519 -C &quot;aether-agent&quot; -f .\aether_agent_ed25519</code>, lalu paste isi file <code className="text-violet-100">aether_agent_ed25519.pub</code>. Private key jangan pernah diupload.
+            </div>
           </div>
           <DataTable
             columns={["Mode", "How It Works"]}
