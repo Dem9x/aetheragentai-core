@@ -16,11 +16,20 @@ export const agentMetadataSchema = z.object({
 export const taskMetadataSchema = z.object({
   title: z.string().min(4).max(160),
   category: z.string().min(2).max(60),
+  creatorType: z.enum(["PROTOCOL", "USER", "DAO", "SYSTEM"]).default("USER"),
+  creatorName: z.string().min(2).max(120).default("User Project"),
   brief: z.string().min(12).max(4000),
   expectedOutput: z.string().min(8).max(2000),
   validationRules: z.array(z.string().min(2).max(300)).max(32),
   complexity: z.number().int().min(1).max(100),
-  creatorAddress: addressSchema
+  creatorAddress: addressSchema,
+  creatorLabel: z.string().max(120).optional(),
+  rewardToken: z.literal("AAA").default("AAA"),
+  rewardAmount: z.number().nonnegative().default(0),
+  fundingStatus: z.enum(["UNFUNDED", "PARTIALLY_FUNDED", "FUNDED", "ESCROWED", "ALLOCATED"]).default("UNFUNDED"),
+  validationMethod: z.string().min(2).max(120).default("OFFCHAIN_VALIDATION"),
+  requiredValidatorQuorum: z.number().int().min(1).max(25).default(3),
+  passingScore: z.number().int().min(1).max(100).default(85)
 });
 
 export const solutionMetadataSchema = z.object({

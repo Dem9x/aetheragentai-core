@@ -2,7 +2,7 @@ import "server-only";
 
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
-import type { Agent, AppData, TaskSubmission } from "@/types";
+import type { Agent, AppData, Task, TaskSubmission } from "@/types";
 import {
   activityLogs,
   agents,
@@ -36,6 +36,41 @@ function seedData(): AppData {
   };
 }
 
+function normalizeTask(task: Task, index: number): Task {
+  const creatorType = task.creatorType ?? (index % 3 === 0 ? "PROTOCOL" : index % 3 === 1 ? "DAO" : "USER");
+  const isSolved = task.status === "Solved";
+  const isValidating = task.status === "Validating";
+
+  return {
+    ...task,
+    onchainTaskId: task.onchainTaskId ?? String(index + 1),
+    creatorType,
+    creatorName: task.creatorName ?? (creatorType === "PROTOCOL" ? "Aether Protocol" : creatorType === "DAO" ? "External DAO" : creatorType === "SYSTEM" ? "Aether Scheduler" : "User Project"),
+    creatorAddress: task.creatorAddress ?? "0x0000000000000000000000000000000000000000",
+    creatorLabel: task.creatorLabel ?? `${creatorType.toLowerCase()} task creator`,
+    metadataURI: task.metadataURI ?? `local://tasks/${task.id}`,
+    rewardToken: task.rewardToken ?? "AAA",
+    rewardFundingStatus: task.rewardFundingStatus ?? (isSolved ? "ALLOCATED" : "FUNDED"),
+    fundingTxHash: task.fundingTxHash,
+    escrowContract: task.escrowContract ?? "TaskBoard",
+    createdAt: task.createdAt ?? new Date().toISOString(),
+    validationStatus: task.validationStatus ?? (isSolved ? "FINALIZED" : isValidating ? "IN_VALIDATION" : "SUBMISSIONS_OPEN"),
+    requiredValidatorQuorum: task.requiredValidatorQuorum ?? 3,
+    validatorCount: task.validatorCount ?? (isSolved ? 3 : isValidating ? 1 : 0),
+    passingScore: task.passingScore ?? 85,
+    settlementStatus: task.settlementStatus ?? (isSolved ? "CLAIMABLE" : isValidating ? "PENDING_ALLOCATION" : "NOT_READY"),
+    solvedAt: task.solvedAt,
+    finalizedBy: task.finalizedBy
+  };
+}
+
+function normalizeData(data: AppData): AppData {
+  return {
+    ...data,
+    tasks: data.tasks.map(normalizeTask)
+  };
+}
+
 async function ensureDataFile() {
   await mkdir(dataDirectory, { recursive: true });
 
@@ -49,7 +84,7 @@ async function ensureDataFile() {
 export async function readData(): Promise<AppData> {
   await ensureDataFile();
   const raw = await readFile(dataFile, "utf8");
-  return { ...seedData(), ...JSON.parse(raw) } as AppData;
+  return normalizeData({ ...seedData(), ...JSON.parse(raw) } as AppData);
 }
 
 export async function writeData(data: AppData) {
@@ -102,7 +137,7 @@ export async function createSubmission(submission: TaskSubmission) {
   data.tasks = data.tasks.map((task) => {
     if (task.id !== submission.taskId) return task;
     const submittedAgents = Array.from(new Set([...task.submittedAgents, submission.agentId]));
-    return { ...task, status: "Validating", submittedAgents };
+    return { ...task, status: "Validating", validationStatus: "IN_VALIDATION", settlementStatus: "PENDING_ALLOCATION", submittedAgents };
   });
   data.rewards = [
     {

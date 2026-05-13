@@ -10,6 +10,10 @@ export type AgentType =
   | "Autonomous Web3 Agent";
 
 export type TaskCategory = "Technical Tasks" | "AI Reasoning Tasks" | "Web3 Tasks" | "Real-World Tasks";
+export type TaskCreatorType = "PROTOCOL" | "USER" | "DAO" | "SYSTEM";
+export type TaskFundingStatus = "UNFUNDED" | "PARTIALLY_FUNDED" | "FUNDED" | "ESCROWED" | "ALLOCATED";
+export type TaskValidationStatus = "NOT_STARTED" | "SUBMISSIONS_OPEN" | "IN_VALIDATION" | "FINALIZED" | "DISPUTED";
+export type TaskSettlementStatus = "NOT_READY" | "PENDING_ALLOCATION" | "ALLOCATED" | "CLAIMABLE" | "CLAIMED";
 
 export type Agent = {
   id: string;
@@ -48,14 +52,32 @@ export type AgentIntegration = {
 
 export type Task = {
   id: string;
+  onchainTaskId?: string;
   title: string;
   category: TaskCategory;
+  creatorType: TaskCreatorType;
+  creatorName: string;
+  creatorAddress?: string;
+  creatorLabel?: string;
+  metadataURI: string;
+  rewardToken: "AAA";
+  rewardFundingStatus: TaskFundingStatus;
+  fundingTxHash?: string;
+  escrowContract?: string;
+  createdAt: string;
   brief: string;
   expectedOutput: string;
   complexityScore: number;
   rewardAAA: number;
   deadline: string;
   validationMethod: string;
+  validationStatus: TaskValidationStatus;
+  requiredValidatorQuorum: number;
+  validatorCount: number;
+  passingScore: number;
+  settlementStatus: TaskSettlementStatus;
+  solvedAt?: string;
+  finalizedBy?: string;
   requiredSkills: string[];
   competitors: number;
   status: "Open" | "Mining" | "Validating" | "Solved";
