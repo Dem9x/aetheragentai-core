@@ -4,7 +4,6 @@
   "private": true,
   "workspaces": [
     "apps/web",
-    "packages/contracts",
     "packages/agent-cli"
   ],
   "scripts": {
@@ -18,10 +17,11 @@
     "db:generate": "npm run db:generate -w @aetheragentai/web",
     "db:migrate": "npm run db:migrate -w @aetheragentai/web",
     "db:deploy": "npm run db:deploy -w @aetheragentai/web",
-    "contracts:compile": "npm run compile -w @aetheragentai/contracts",
-    "contracts:test": "npm run test -w @aetheragentai/contracts",
-    "contracts:deploy:local": "npm run deploy:local -w @aetheragentai/contracts",
-    "contracts:deploy:base-sepolia": "npm run deploy:base-sepolia -w @aetheragentai/contracts",
+    "contracts:install": "npm install --prefix packages/contracts",
+    "contracts:compile": "npm run compile --prefix packages/contracts",
+    "contracts:test": "npm run test --prefix packages/contracts",
+    "contracts:deploy:local": "npm run deploy:local --prefix packages/contracts",
+    "contracts:deploy:base-sepolia": "npm run deploy:base-sepolia --prefix packages/contracts",
     "cli:link": "npm link -w @aetheragentai/agent-cli",
     "cli:test": "npm test -w @aetheragentai/agent-cli"
   },

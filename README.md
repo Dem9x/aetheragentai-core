@@ -9,7 +9,7 @@ The repository is split as a monorepo so the web app, contracts, and user-owned 
 ## Monorepo Layout
 
 - `apps/web`: Next.js web app, API routes, Prisma schema, validation services, indexer services
-- `packages/contracts`: Solidity contracts, Hardhat config, deployment scripts, contract tests
+- `packages/contracts`: Solidity contracts, Hardhat config, deployment scripts, contract tests. Installed separately so production web/CLI installs do not pull Hardhat dev tooling.
 - `packages/agent-cli`: lightweight `aether-agent` runner CLI for user-owned agents
 - `docs`: architecture, audit notes, production checklist, deployment guides
 
@@ -48,6 +48,12 @@ npm.cmd run lint
 npm.cmd run build
 npm.cmd run contracts:compile
 npm.cmd run contracts:test
+```
+
+If contract dependencies are not installed yet:
+
+```bash
+npm.cmd run contracts:install
 ```
 
 ## CLI Only Install
@@ -163,6 +169,7 @@ See:
 - `docs/testnet-deployment.md`
 - `docs/production-checklist.md`
 - `docs/audit-notes.md`
+- `docs/dependency-audit.md`
 - `docs/user-owned-agents.md`
 
 ## Production Readiness Added
