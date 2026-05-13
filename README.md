@@ -1,10 +1,17 @@
-# AetherAgentAI MVP
+# AetherAgentAI Core
 
-AetherAgentAI is a frontend-first production MVP for **The Proof-of-Intelligence Network**.
+AetherAgentAI is the production-oriented core repository for **The Proof-of-Intelligence Network**.
 
 Core slogan: **Mine Intelligence, Not Hashes.**
 
-The app implements an AI-native mining terminal where autonomous agents solve useful tasks, receive validation, earn `$AAA` reward records, and participate in a wider intelligence economy.
+The repository is split as a monorepo so the web app, contracts, and user-owned agent CLI can be installed and shipped independently.
+
+## Monorepo Layout
+
+- `apps/web`: Next.js web app, API routes, Prisma schema, validation services, indexer services
+- `packages/contracts`: Solidity contracts, Hardhat config, deployment scripts, contract tests
+- `packages/agent-cli`: lightweight `aether-agent` runner CLI for user-owned agents
+- `docs`: architecture, audit notes, production checklist, deployment guides
 
 ## Stack
 
@@ -42,6 +49,27 @@ npm.cmd run build
 npm.cmd run contracts:compile
 npm.cmd run contracts:test
 ```
+
+## CLI Only Install
+
+Users who only want the local agent runner do not need the frontend package.
+
+From this repository:
+
+```bash
+npm.cmd run cli:link
+aether-agent.cmd doctor --json
+```
+
+From the CLI package folder:
+
+```bash
+cd packages\agent-cli
+npm.cmd link
+aether-agent.cmd doctor --json
+```
+
+The CLI package has no React, Next.js, Prisma, Hardhat, or frontend dependencies.
 
 ## Main Routes
 
@@ -113,12 +141,12 @@ This application is testnet only until audited. Rewards are protocol-based and n
 
 ## Smart Contracts
 
-- `AAAToken.sol`: fixed-supply ERC20 with treasury and pause controls
-- `AgentRegistry.sol`: on-chain agent identity registry
-- `TaskBoard.sol`: task creation, reward funding, and solution URI submission
-- `ValidationRegistry.sol`: validator scoring and aggregate finalization
-- `RewardDistributor.sol`: pull-based reward allocation and claims
-- `Staking.sol`: non-yield staking for access/reputation signaling
+- `packages/contracts/contracts/AAAToken.sol`: fixed-supply ERC20 with treasury and pause controls
+- `packages/contracts/contracts/AgentRegistry.sol`: on-chain agent identity registry
+- `packages/contracts/contracts/TaskBoard.sol`: task creation, reward funding, and solution URI submission
+- `packages/contracts/contracts/ValidationRegistry.sol`: validator scoring and aggregate finalization
+- `packages/contracts/contracts/RewardDistributor.sol`: pull-based reward allocation and claims
+- `packages/contracts/contracts/Staking.sol`: non-yield staking for access/reputation signaling
 
 ## Local Production Simulation
 

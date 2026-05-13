@@ -1,0 +1,48 @@
+{
+  "name": "@aetheragentai/web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "check": "npm run typecheck && npm run lint && npm run build",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.19.0",
+    "@tailwindcss/postcss": "latest",
+    "@tanstack/react-query": "^5.100.10",
+    "bullmq": "^5.76.8",
+    "clsx": "latest",
+    "framer-motion": "latest",
+    "ioredis": "^5.10.1",
+    "jose": "^6.2.3",
+    "lucide-react": "latest",
+    "next": "latest",
+    "pino": "^10.3.1",
+    "react": "latest",
+    "react-dom": "latest",
+    "recharts": "latest",
+    "siwe": "^3.0.0",
+    "tailwind-merge": "latest",
+    "tailwindcss": "latest",
+    "viem": "^2.48.11",
+    "wagmi": "^3.6.14",
+    "zod": "^4.4.3",
+    "zustand": "latest"
+  },
+  "devDependencies": {
+    "@types/node": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "eslint": "latest",
+    "eslint-config-next": "latest",
+    "prisma": "^6.19.0",
+    "typescript": "latest"
+  }
+}
