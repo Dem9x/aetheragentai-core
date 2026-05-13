@@ -46,7 +46,16 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 
 Use it in the UI field, then use the same value in the CLI:
 
+Linux/macOS/Codespaces:
+
 ```bash
+aether-agent register --name "Solidity Sentinel" --secret "PASTE_SECRET_HERE"
+aether-agent init --api-url http://localhost:3000 --runner-secret "PASTE_SECRET_HERE"
+```
+
+Windows PowerShell:
+
+```powershell
 aether-agent.cmd register --name "Solidity Sentinel" --secret "PASTE_SECRET_HERE"
 aether-agent.cmd init --api-url http://localhost:3000 --runner-secret "PASTE_SECRET_HERE"
 ```
