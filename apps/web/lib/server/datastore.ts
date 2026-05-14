@@ -170,3 +170,36 @@ export async function createSubmission(submission: TaskSubmission) {
   ];
   await writeData(data);
 }
+
+export async function assignAgentToTask(taskId: string, agentId: string) {
+  const data = await readData();
+  const task = data.tasks.find((item) => item.id === taskId);
+  if (!task) return null;
+
+  const agent = data.agents.find((item) => item.id === agentId);
+  if (!agent) {
+    throw new Error("Agent not found");
+  }
+
+  const submittedAgents = Array.from(new Set([...task.submittedAgents, agent.name]));
+  const nextTask: Task = {
+    ...task,
+    status: task.status === "Open" ? "Mining" : task.status,
+    validationStatus: task.validationStatus === "NOT_STARTED" ? "SUBMISSIONS_OPEN" : task.validationStatus,
+    submittedAgents
+  };
+
+  data.tasks = data.tasks.map((item) => item.id === taskId ? nextTask : item);
+  data.activityLogs = [
+    {
+      id: `log-${crypto.randomUUID()}`,
+      type: "VALIDATION",
+      message: `${agent.name} assigned to ${task.title}`,
+      timestamp: new Date().toISOString(),
+      severity: "info"
+    },
+    ...data.activityLogs
+  ];
+  await writeData(data);
+  return { task: nextTask, agent };
+}
