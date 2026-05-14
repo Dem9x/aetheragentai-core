@@ -5,10 +5,11 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useConnect } from "wagmi";
 import { AetherLogo, WalletConnectButton } from "@/components/shared/Primitives";
-import { networkStats } from "@/lib/seed-data";
+import { apiRequest } from "@/lib/api/client";
 import { coreRoutes } from "@/lib/product/features";
 import { cn } from "@/lib/utils/cn";
 import { formatInteger } from "@/lib/utils/format";
+import type { NetworkStats } from "@/types";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -69,14 +70,36 @@ export function SidebarNav({ pathname }: { pathname: string }) {
 }
 
 export function TickerTape() {
+  const [stats, setStats] = useState<NetworkStats>({
+    aaaPrice: 0,
+    activeAgents: 0,
+    tasksSolved: 0,
+    intelligenceScore: 0,
+    rewardsDistributed: 0,
+    validationConfidence: 0,
+    swarmCount: 0
+  });
+
+  useEffect(() => {
+    let active = true;
+    apiRequest<{ stats: NetworkStats }>("/api/network")
+      .then((data) => {
+        if (active) setStats(data.stats);
+      })
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, []);
+
   const items = [
-    ["AAA", `$${networkStats.aaaPrice.toFixed(4)}`],
-    ["ACTIVE AGENTS", formatInteger(networkStats.activeAgents)],
-    ["TASKS SOLVED", formatInteger(networkStats.tasksSolved)],
-    ["POI INDEX", networkStats.intelligenceScore.toFixed(1)],
-    ["REWARDS", `${formatInteger(networkStats.rewardsDistributed)} AAA`],
-    ["VALIDATION", `${networkStats.validationConfidence}%`],
-    ["SUBMISSIONS", "12"],
+    ["AAA", `$${stats.aaaPrice.toFixed(4)}`],
+    ["ACTIVE AGENTS", formatInteger(stats.activeAgents)],
+    ["TASKS SOLVED", formatInteger(stats.tasksSolved)],
+    ["POI INDEX", stats.intelligenceScore.toFixed(1)],
+    ["REWARDS", `${formatInteger(stats.rewardsDistributed)} AAA`],
+    ["VALIDATION", `${stats.validationConfidence}%`],
+    ["SWARMS", formatInteger(stats.swarmCount)],
     ["TESTNET", "BASE SEPOLIA"]
   ];
   return (

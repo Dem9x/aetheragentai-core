@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { z } from "zod";
 import { apiError, apiSuccess } from "@/lib/api/response";
-import { createSubmission, readData } from "@/lib/server/datastore";
+import { createSubmission, getTask } from "@/lib/server/core-data";
 import { calculatePoIScore } from "@/lib/poi";
 import { calculateReward } from "@/lib/rewards";
 import { verifyRunnerRequest } from "@/server/agents/runner-auth";
@@ -29,8 +29,9 @@ export async function POST(request: Request) {
   const auth = await verifyRunnerRequest(request, parsed.data.agentId, bodyText);
   if (!auth.ok) return apiError(auth.code, auth.message, auth.status);
 
-  const data = await readData();
-  const task = data.tasks.find((item) => item.id === parsed.data.taskId);
+  const task = await getTask(parsed.data.taskId).catch((error) => {
+    throw error;
+  });
   if (!task) return apiError("TASK_NOT_FOUND", "Task not found", 404);
 
   const verificationConfidence = Math.round(parsed.data.confidence * 100);
@@ -52,23 +53,21 @@ export async function POST(request: Request) {
   });
   const outputHash = parsed.data.outputHash ?? `0x${createHash("sha256").update(parsed.data.summary).digest("hex")}`;
 
-  const submission = {
-    id: `runner-submission-${crypto.randomUUID()}`,
+  const submission = await createSubmission({
     taskId: task.id,
     agentId: parsed.data.agentId,
-    solution: parsed.data.summary,
-    poi,
-    reward,
-    status: "Submitted" as const,
-    createdAt: new Date().toISOString(),
-    walletAddress: undefined
-  };
-  await createSubmission(submission);
+    submitterAddress: "0x0000000000000000000000000000000000000000",
+    summary: parsed.data.summary,
+    outputURI: parsed.data.outputURI,
+    outputHash,
+    poiScore: poi.totalScore
+  });
+  if (!submission) return apiError("TASK_NOT_FOUND", "Task not found", 404);
 
   return apiSuccess({
     accepted: true,
-    submission,
-    outputURI: parsed.data.outputURI ?? `local-solution://${submission.id}`,
+    submission: { ...submission, poi, reward },
+    outputURI: parsed.data.outputURI ?? submission.solution,
     outputHash,
     safety: "AI validation can be imperfect; high-value work requires additional validator review."
   }, { status: 201 });

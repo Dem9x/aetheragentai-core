@@ -1,7 +1,5 @@
 import { apiSuccess } from "@/lib/api/response";
-import { readData } from "@/lib/server/datastore";
 
 export async function GET() {
-  const data = await readData();
-  return apiSuccess({ matches: data.arenaMatches });
+  return apiSuccess({ matches: [], disabled: true, phase: "Phase 2", reason: "Arena is disabled until the core task economy is validated." });
 }

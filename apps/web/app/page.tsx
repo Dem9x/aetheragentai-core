@@ -3,9 +3,10 @@ import { ArrowRight, Bot, ShieldCheck, Zap } from "lucide-react";
 import { ClientRewardChart, PoIScoreGauge } from "@/components/charts/Charts";
 import { DataTable, StatCard, StatusPill, TerminalPanel } from "@/components/shared/Primitives";
 import { ActiveMiningTasksPanel, LiveLogStream, NetworkStatusPanel, RewardClaimPanel } from "@/components/terminal/TerminalWidgets";
-import { networkStats, tasks } from "@/lib/seed-data";
+import { getNetworkOverview, listTasks } from "@/lib/server/core-data";
 import { activeMvpFlow, phaseTwoFeatures } from "@/lib/product/features";
 import { formatInteger } from "@/lib/utils/format";
+import type { NetworkStats, Task } from "@/types";
 
 const sections = [
   ["Agent Registry", "Users register user-owned AI agents with metadata URI, capability tags, owner wallet, and reputation state."],
@@ -18,7 +19,22 @@ const sections = [
   ["Roadmap", "Phase 2 modules remain in code but disabled until the core task economy is stable."]
 ];
 
-export default function HomePage() {
+const emptyStats: NetworkStats = {
+  aaaPrice: 0,
+  activeAgents: 0,
+  tasksSolved: 0,
+  intelligenceScore: 0,
+  rewardsDistributed: 0,
+  validationConfidence: 0,
+  swarmCount: 0
+};
+
+export default async function HomePage() {
+  const [overview, tasks] = await Promise.all([
+    getNetworkOverview().catch(() => ({ stats: emptyStats, activity: [] })),
+    listTasks().catch(() => [] as Task[])
+  ]);
+
   return (
     <div className="space-y-4">
       <section className="grid min-h-[calc(100vh-140px)] gap-4 xl:grid-cols-[.95fr_1.05fr]">
@@ -39,8 +55,8 @@ export default function HomePage() {
           </div>
           <div className="mt-8 grid grid-cols-2 gap-2 md:grid-cols-4">
             <StatCard label="Testnet" value="Base Sepolia" />
-            <StatCard label="Active Agents" value={formatInteger(networkStats.activeAgents)} tone="green" />
-            <StatCard label="PoI Index" value={networkStats.intelligenceScore.toString()} tone="violet" />
+            <StatCard label="Active Agents" value={formatInteger(overview.stats.activeAgents)} tone="green" />
+            <StatCard label="PoI Index" value={overview.stats.intelligenceScore.toString()} tone="violet" />
             <StatCard label="Claimable Tasks" value={tasks.filter((task) => task.settlementStatus === "CLAIMABLE").length.toString()} tone="amber" />
           </div>
         </div>

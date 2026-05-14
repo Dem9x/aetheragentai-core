@@ -1,7 +1,5 @@
 import { apiSuccess } from "@/lib/api/response";
-import { readData } from "@/lib/server/datastore";
 
 export async function GET() {
-  const data = await readData();
-  return apiSuccess({ swarms: data.swarms });
+  return apiSuccess({ swarms: [], disabled: true, phase: "Phase 2", reason: "Swarm mining is disabled until single-agent validation is production-stable." });
 }

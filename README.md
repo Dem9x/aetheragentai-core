@@ -159,7 +159,7 @@ Phase 2 and Phase 3 routes remain in code but are disabled in the UI until the c
 
 ## API Contract
 
-All APIs return typed JSON through route handlers backed by the local datastore:
+All core APIs return typed JSON through route handlers backed by PostgreSQL/Prisma, indexed contract events, and authenticated wallet or runner requests. There is no mock datastore in the production core flow:
 
 - `GET /api/network`
 - `GET /api/agents`

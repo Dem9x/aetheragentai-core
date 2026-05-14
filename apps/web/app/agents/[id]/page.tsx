@@ -3,13 +3,12 @@ import { notFound } from "next/navigation";
 import { ClientMiniLineChart, PoIScoreGauge, ValidationConfidenceBar } from "@/components/charts/Charts";
 import { DataTable, StatCard, TerminalPanel } from "@/components/shared/Primitives";
 import { AgentIntegrationPanel } from "@/components/agents/AgentIntegrationPanel";
-import { readData } from "@/lib/server/datastore";
+import { getAgent } from "@/lib/server/core-data";
 import { formatInteger } from "@/lib/utils/format";
 
 export default async function AgentProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const data = await readData();
-  const agent = data.agents.find((item) => item.id === id);
+  const agent = await getAgent(id).catch(() => null);
   if (!agent) notFound();
   return (
     <div className="space-y-4">

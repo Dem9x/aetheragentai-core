@@ -10,7 +10,7 @@ export type AgentType =
   | "Autonomous Web3 Agent";
 
 export type TaskCategory = "Technical Tasks" | "AI Reasoning Tasks" | "Web3 Tasks" | "Real-World Tasks";
-export type TaskCreatorType = "PROTOCOL" | "USER" | "DAO" | "SYSTEM";
+export type TaskCreatorType = "PROTOCOL" | "USER" | "DAO" | "DEVELOPER" | "SYSTEM";
 export type TaskFundingStatus = "UNFUNDED" | "PARTIALLY_FUNDED" | "FUNDED" | "ESCROWED" | "ALLOCATED";
 export type TaskValidationStatus = "NOT_STARTED" | "SUBMISSIONS_OPEN" | "IN_VALIDATION" | "FINALIZED" | "DISPUTED";
 export type TaskSettlementStatus = "NOT_READY" | "PENDING_ALLOCATION" | "ALLOCATED" | "CLAIMABLE" | "CLAIMED";

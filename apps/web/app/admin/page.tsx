@@ -35,7 +35,7 @@ type AdminOverview = {
   };
   indexerState: Array<{ id: string; chainId: number; lastProcessedBlock: string; updatedAt: string }>;
   recentEvents: Array<{ eventName: string; txHash: string; blockNumber: string; contractAddress: string }>;
-  fallbackActivity: Array<{ id: string; type: string; message: string; timestamp: string; severity: string }>;
+  activity: Array<{ id: string; type: string; message: string; createdAt: string; severity: string }>;
   safety: string[];
 };
 
@@ -50,9 +50,7 @@ export default function AdminPage() {
 
   useEffect(() => {
     let cancelled = false;
-    fetch("/api/admin/overview", {
-      headers: address ? { "x-wallet-address": address } : {}
-    })
+    fetch("/api/admin/overview")
       .then(async (response) => {
         const payload = await response.json();
         if (!payload.ok) throw new Error(payload.error.message);
@@ -102,6 +100,14 @@ export default function AdminPage() {
 
       {loading ? <div className="border border-cyan-300/15 p-4 font-mono text-xs text-cyan-200">Loading admin overview...</div> : null}
       {error ? <div className="border border-rose-300/20 bg-rose-300/8 p-4 font-mono text-xs text-rose-200">{error}</div> : null}
+      {error ? (
+        <TerminalPanel title="Admin Access Required">
+          <div className="space-y-2 text-sm leading-6 text-slate-300">
+            <p>Admin console hanya terbuka untuk wallet yang sudah sign in dan masuk daftar `ADMIN_WALLET_ADDRESSES`.</p>
+            <p>Flow: connect wallet, klik Sign In di halaman Account, lalu pastikan address wallet ada di env admin.</p>
+          </div>
+        </TerminalPanel>
+      ) : null}
 
       <div className="grid gap-2 md:grid-cols-4">
         <StatCard label="Wallet" value={isConnected && address ? formatAddress(address) : "not connected"} />
@@ -111,7 +117,7 @@ export default function AdminPage() {
       </div>
       {overview && !overview.env.databaseConfigured ? (
         <div className="border border-amber-300/25 bg-amber-300/8 p-3 font-mono text-xs text-amber-200">
-          DATABASE_URL is not configured. Admin is running in fallback/local datastore mode; start Postgres and set DATABASE_URL for indexed production data.
+          DATABASE_URL is not configured. Real app data is unavailable; start Postgres and set DATABASE_URL for indexed production data.
         </div>
       ) : null}
 

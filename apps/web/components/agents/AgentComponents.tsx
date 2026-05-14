@@ -8,6 +8,7 @@ import { apiRequest } from "@/lib/api/client";
 import { formatInteger } from "@/lib/utils/format";
 import { ClientMiniLineChart, ValidationConfidenceBar } from "@/components/charts/Charts";
 import { StatusPill } from "@/components/shared/Primitives";
+import { useAccount } from "wagmi";
 
 export function AgentStatusBadge({ status }: { status: Agent["status"] }) {
   return <StatusPill tone={status === "Mining" ? "green" : status === "Paused" ? "red" : status === "Arena" ? "violet" : "cyan"}>{status}</StatusPill>;
@@ -56,19 +57,24 @@ function Metric({ label, value }: { label: string; value: string | number }) {
 export function CreateAgentModal({ onCreate }: { onCreate: (agent: Agent) => void }) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("AAA-SENTINEL");
+  const [type, setType] = useState("Autonomous Web3 Agent");
+  const [promptProfile, setPromptProfile] = useState("Production registered agent awaiting orchestrator assignment.");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const { address, isConnected } = useAccount();
 
   async function deployAgent() {
     setSaving(true);
     setError("");
     try {
+      if (!isConnected || !address) throw new Error("Connect wallet and sign in before registering a real agent.");
       const data = await apiRequest<{ agent: Agent }>("/api/agents", {
         method: "POST",
         body: JSON.stringify({
           name,
-          type: "Autonomous Web3 Agent",
-          promptProfile: "Production registered agent awaiting orchestrator assignment."
+          type,
+          promptProfile,
+          ownerAddress: address
         })
       });
       onCreate(data.agent);
@@ -89,10 +95,11 @@ export function CreateAgentModal({ onCreate }: { onCreate: (agent: Agent) => voi
             <div className="border-b border-cyan-300/15 px-4 py-3 font-mono text-xs uppercase text-cyan-200">Deploy New Intelligence Miner</div>
             <div className="space-y-3 p-4">
               <input className="w-full border border-cyan-300/20 bg-black/30 px-3 py-2 font-mono text-sm" value={name} onChange={(event) => setName(event.target.value)} />
-              <select className="w-full border border-cyan-300/20 bg-black/30 px-3 py-2 font-mono text-sm">
+              <select className="w-full border border-cyan-300/20 bg-black/30 px-3 py-2 font-mono text-sm" value={type} onChange={(event) => setType(event.target.value)}>
                 <option>Coding Agent</option><option>Research Agent</option><option>Blockchain Analysis Agent</option><option>Security Agent</option>
+                <option>Autonomous Web3 Agent</option>
               </select>
-              <textarea className="h-28 w-full border border-cyan-300/20 bg-black/30 px-3 py-2 font-mono text-sm" defaultValue="Mine useful intelligence with high validation confidence." />
+              <textarea className="h-28 w-full border border-cyan-300/20 bg-black/30 px-3 py-2 font-mono text-sm" value={promptProfile} onChange={(event) => setPromptProfile(event.target.value)} />
               {error ? <div className="border border-rose-300/25 bg-rose-300/8 p-2 font-mono text-xs text-rose-200">{error}</div> : null}
               <div className="flex justify-end gap-2">
                 <button onClick={() => setOpen(false)} className="border border-slate-700 px-3 py-2 font-mono text-xs text-slate-300">Cancel</button>

@@ -1,18 +1,23 @@
 import { apiError, apiSuccess } from "@/lib/api/response";
 import { databaseConfigured, prisma } from "@/lib/server/prisma";
-import { readData } from "@/lib/server/datastore";
 import { contractAddresses } from "@/lib/web3/contracts";
+import { requireAdminSession } from "@/server/api/admin";
 
-export async function GET(request: Request) {
-  const configuredAdmins = (process.env.ADMIN_WALLET_ADDRESSES ?? "")
-    .split(",")
-    .map((item) => item.trim().toLowerCase())
-    .filter(Boolean);
-  const requestedAddress = request.headers.get("x-wallet-address")?.toLowerCase();
-  const isConfigured = configuredAdmins.length > 0;
-  const isAdmin = Boolean(requestedAddress && configuredAdmins.includes(requestedAddress));
+export async function GET() {
+  const admin = await requireAdminSession();
+  if (!admin.configured) {
+    return apiError("ADMIN_NOT_CONFIGURED", "Set ADMIN_WALLET_ADDRESSES before using the admin console.", 403);
+  }
+  if (!admin.session) {
+    return apiError("AUTH_REQUIRED", "Sign in with an admin wallet before opening the admin console.", 401);
+  }
+  if (!admin.ok) {
+    return apiError("ADMIN_WALLET_REQUIRED", "Connected wallet is not in ADMIN_WALLET_ADDRESSES", 403, {
+      requestedAddress: admin.session.address
+    });
+  }
 
-  const [dbStats, indexerState, recentEvents, fallback] = await Promise.all([
+  const [dbStats, indexerState, recentEvents, activity] = await Promise.all([
     Promise.all([
       prisma.agent.count().catch(() => 0),
       prisma.task.count().catch(() => 0),
@@ -23,22 +28,17 @@ export async function GET(request: Request) {
     ]),
     prisma.indexerState.findMany({ orderBy: { updatedAt: "desc" }, take: 5 }).catch(() => []),
     prisma.indexedEvent.findMany({ orderBy: { blockNumber: "desc" }, take: 20 }).catch(() => []),
-    readData()
+    prisma.activityLog.findMany({ orderBy: { createdAt: "desc" }, take: 10 }).catch(() => [])
   ]);
 
   const [agents, tasks, submissions, validations, rewards, indexedEvents] = dbStats;
-  if (isConfigured && requestedAddress && !isAdmin) {
-    return apiError("ADMIN_WALLET_REQUIRED", "Connected wallet is not in ADMIN_WALLET_ADDRESSES", 403, {
-      requestedAddress
-    });
-  }
 
   return apiSuccess({
     access: {
-      configured: isConfigured,
-      isAdmin,
-      requestedAddress: requestedAddress ?? null,
-      mode: isConfigured ? "allowlist" : "read_only_unconfigured"
+      configured: admin.configured,
+      isAdmin: admin.isAdmin,
+      requestedAddress: admin.session.address,
+      mode: "allowlist_session"
     },
     contracts: contractAddresses,
     env: {
@@ -60,7 +60,7 @@ export async function GET(request: Request) {
     },
     indexerState,
     recentEvents,
-    fallbackActivity: fallback.activityLogs.slice(0, 10),
+    activity,
     safety: [
       "testnet only until audited",
       "rewards are protocol-based and not guaranteed",

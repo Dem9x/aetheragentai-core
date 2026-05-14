@@ -54,11 +54,11 @@ export function TaskCard({ task }: { task: Task }) {
     setAssigning(true);
     setError("");
     try {
-      const data = await apiRequest<{ assigned: boolean; agent: Agent }>(`/api/tasks/${task.id}/assign`, {
+      const data = await apiRequest<{ assigned: boolean; assignedAgent: string; agentId: string }>(`/api/tasks/${task.id}/assign`, {
         method: "POST",
         body: JSON.stringify({ agentId: selectedAgentId })
       });
-      setAssignedAgent(data.agent.name);
+      setAssignedAgent(data.assignedAgent);
       setAssignOpen(false);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Agent assignment failed");
@@ -74,7 +74,7 @@ export function TaskCard({ task }: { task: Task }) {
       await apiRequest<{ accepted: boolean }>(`/api/tasks/${task.id}/submit`, {
         method: "POST",
         body: JSON.stringify({
-          agentId: "agent-orion",
+          agentId: selectedAgentId,
           walletAddress: address,
           solution: `Production submission for ${task.title}: validated task analysis queued for PoI verification.`
         })

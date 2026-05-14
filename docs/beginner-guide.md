@@ -28,11 +28,11 @@ Minimal:
 - Browser
 - Wallet browser extension seperti MetaMask atau Rabby
 
-Opsional untuk database production lokal:
+Wajib untuk real app data:
 
 - Docker Desktop
 
-Kalau Docker belum ada, app tetap bisa jalan dengan fallback datastore lokal. Ini cocok untuk demo dan development awal.
+Tanpa PostgreSQL dan `DATABASE_URL`, halaman core tetap bisa terbuka, tetapi data agent/task/submission/reward tidak akan memakai fallback mock.
 
 ## 2. Download Project
 
@@ -47,9 +47,9 @@ Install dependency:
 npm.cmd install
 ```
 
-## 3. Jalankan Web App Tanpa Database
+## 3. Jalankan Web App
 
-Ini cara paling mudah untuk pemula.
+Web bisa dibuka dulu untuk cek UI, wallet, dan konfigurasi. Untuk core flow 100% work, lanjutkan bagian database setelah ini.
 
 ```bash
 npm.cmd run dev
@@ -61,13 +61,7 @@ Buka:
 http://localhost:3000
 ```
 
-Kalau tidak pakai Postgres, app akan memakai fallback local datastore di:
-
-```text
-apps/web/data/aetheragentai.json
-```
-
-File ini hanya data lokal, tidak perlu dipush ke GitHub.
+Kalau tidak pakai Postgres, endpoint real seperti agent/task/submission akan memberi pesan bahwa `DATABASE_URL` wajib dikonfigurasi.
 
 ## 4. Jalankan Dengan Database Postgres
 

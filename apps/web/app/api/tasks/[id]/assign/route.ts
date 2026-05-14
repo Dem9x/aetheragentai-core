@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { apiError, apiSuccess } from "@/lib/api/response";
-import { assignAgentToTask } from "@/lib/server/datastore";
+import { assignAgentToTask } from "@/lib/server/core-data";
 
 const assignSchema = z.object({
   agentId: z.string().min(1)
