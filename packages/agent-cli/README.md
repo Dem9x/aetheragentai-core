@@ -226,6 +226,7 @@ npm run demo:runner
 ```
 
 This generates runner keys, registers a sample agent, pulls a task, runs the sample local agent, submits the result, and prints the submission id.
+The demo uses `.aether-demo/config.json` by default so it does not overwrite the user's global `~/.aether-agent/config.json`.
 
 Smoke-test with the bundled sample agent from the repo root:
 

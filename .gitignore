@@ -24,6 +24,7 @@ packages/*/.env*.local
 data/*.json
 apps/web/data/*.json
 !apps/web/data/.gitkeep
+.aether-demo
 
 # logs
 npm-debug.log*
