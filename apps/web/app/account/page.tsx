@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { ExternalLink, Wallet } from "lucide-react";
+import { ExternalLink, ShieldCheck, Wallet } from "lucide-react";
+import { SiweMessage } from "siwe";
 import { formatEther } from "viem";
-import { useAccount, useBalance, useChainId, useConnect, useDisconnect } from "wagmi";
+import { useAccount, useBalance, useChainId, useConnect, useDisconnect, useSignMessage } from "wagmi";
 import { DataTable, StatCard, StatusPill, TerminalPanel } from "@/components/shared/Primitives";
 import { apiRequest } from "@/lib/api/client";
 import { formatDateTime } from "@/lib/utils/format";
@@ -27,10 +28,13 @@ export default function AccountPage() {
   const chainId = useChainId();
   const { connect, connectors, isPending } = useConnect();
   const { disconnect } = useDisconnect();
+  const { signMessageAsync } = useSignMessage();
   const { data: balance } = useBalance({ address });
   const [data, setData] = useState<AccountData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [authLoading, setAuthLoading] = useState(false);
+  const [authError, setAuthError] = useState("");
 
   useEffect(() => {
     if (!address) {
@@ -51,6 +55,40 @@ export default function AccountPage() {
       cancelled = true;
     };
   }, [address]);
+
+  async function signIn() {
+    if (!address) return;
+    setAuthLoading(true);
+    setAuthError("");
+    try {
+      const nonceData = await apiRequest<{ nonce: string; statement: string }>("/api/auth/nonce", {
+        method: "POST",
+        body: JSON.stringify({ address })
+      });
+      const message = new SiweMessage({
+        domain: window.location.host,
+        address,
+        statement: nonceData.statement,
+        uri: window.location.origin,
+        version: "1",
+        chainId,
+        nonce: nonceData.nonce
+      }).prepareMessage();
+      const signature = await signMessageAsync({ message });
+      await apiRequest<{ authenticated: boolean }>("/api/auth/verify", {
+        method: "POST",
+        body: JSON.stringify({ message, signature })
+      });
+      setLoading(true);
+      const account = await apiRequest<AccountData>(`/api/account/${address}`);
+      setData(account);
+    } catch (reason) {
+      setAuthError(reason instanceof Error ? reason.message : "Authentication failed");
+    } finally {
+      setAuthLoading(false);
+      setLoading(false);
+    }
+  }
 
   const claimable = useMemo(() => data?.rewards.filter((reward) => reward.status === "Claimable").length ?? 0, [data]);
 
@@ -91,15 +129,33 @@ export default function AccountPage() {
           ) : null}
           {loading && !data ? <div className="border border-cyan-300/15 p-4 font-mono text-xs text-cyan-200">Loading account records...</div> : null}
           {error ? <div className="border border-rose-300/20 bg-rose-300/8 p-4 font-mono text-xs text-rose-200">{error}</div> : null}
+          {authError ? <div className="border border-rose-300/20 bg-rose-300/8 p-4 font-mono text-xs text-rose-200">{authError}</div> : null}
 
           <div className="grid gap-4 xl:grid-cols-2">
-            <TerminalPanel title="Identity">
+            <TerminalPanel
+              title="Identity"
+              action={!data?.authenticated ? (
+                <button
+                  onClick={signIn}
+                  disabled={authLoading || chainId !== defaultChain.id}
+                  className="inline-flex items-center gap-2 border border-lime-300/25 px-2 py-1 font-mono text-[10px] uppercase text-lime-200 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <ShieldCheck size={12} />
+                  {authLoading ? "Signing" : "Sign In"}
+                </button>
+              ) : <StatusPill tone="green">Authenticated</StatusPill>}
+            >
               <div className="grid gap-3 font-mono text-xs">
                 <Row label="Address" value={address} />
                 <Row label="Session" value={data?.authenticated ? "SIWE authenticated" : "not authenticated"} tone={data?.authenticated ? "green" : "amber"} />
                 <Row label="User ID" value={data?.userId ?? "not linked"} />
                 <Row label="Safety" value={data?.safety ?? "rewards are protocol-based and not guaranteed"} tone="amber" />
               </div>
+              {!data?.authenticated ? (
+                <p className="mt-3 text-xs leading-5 text-slate-500">
+                  Wallet connection only proves the browser can see your address. Sign the nonce message to create a backend session for protected actions.
+                </p>
+              ) : null}
             </TerminalPanel>
             <TerminalPanel title="Indexed Events">
               {data?.indexedEvents.length ? (

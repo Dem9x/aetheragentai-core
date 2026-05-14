@@ -31,12 +31,12 @@ export async function verifySiweAndCreateToken(message: string, signature: strin
   const result = await siwe.verify({
     signature,
     nonce: wallet.nonce,
-    domain: process.env.NEXT_PUBLIC_APP_DOMAIN || undefined
+    domain: process.env.AUTH_SIWE_DOMAIN || undefined
   });
 
   if (!result.success) throw new Error("Signature verification failed");
 
-  const user = await prisma.user.create({ data: {} });
+  const user = wallet.userId ? { id: wallet.userId } : await prisma.user.create({ data: {} });
   await prisma.wallet.update({
     where: { address: siwe.address.toLowerCase() },
     data: { userId: user.id, nonce: null, nonceAt: null }
