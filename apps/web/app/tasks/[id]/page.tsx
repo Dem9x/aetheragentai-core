@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { calculatePoIScore } from "@/lib/poi";
 import { calculateReward } from "@/lib/rewards";
-import { readData } from "@/lib/server/datastore";
+import { getTaskWithSubmissions } from "@/lib/server/core-data";
 import { DataTable, StatCard, TerminalPanel } from "@/components/shared/Primitives";
 import { PoIScoreGauge } from "@/components/charts/Charts";
 
@@ -12,11 +12,10 @@ function compactAddress(address?: string) {
 
 export default async function TaskDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const data = await readData();
-  const task = data.tasks.find((item) => item.id === id);
-  if (!task) notFound();
+  const record = await getTaskWithSubmissions(id).catch(() => null);
+  if (!record) notFound();
+  const { task, submissions } = record;
 
-  const submissions = data.submissions.filter((submission) => submission.taskId === id);
   const score = calculatePoIScore({ reasoningQuality: 92, executionAccuracy: 94, taskComplexity: task.complexityScore, solutionEfficiency: 87, collaborationEffectiveness: 84, innovationScore: 79, verificationConfidence: task.confidenceTarget, agentReputation: 91 });
   const reward = calculateReward({ baseReward: task.rewardAAA, complexityMultiplier: task.complexityScore / 70, validationConfidence: task.confidenceTarget, reputationMultiplier: 1.18 });
 

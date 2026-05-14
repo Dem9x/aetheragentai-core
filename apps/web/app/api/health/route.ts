@@ -1,20 +1,19 @@
 import { apiSuccess } from "@/lib/api/response";
-import { readData } from "@/lib/server/datastore";
+import { databaseConfigured } from "@/lib/server/prisma";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const data = await readData();
   return apiSuccess({
     service: "aetheragentai-web",
-    status: "ok",
+    status: databaseConfigured ? "ok" : "degraded",
     uptime: process.uptime(),
     checks: {
       app: "ok",
-      datastore: data.agents.length > 0 && data.tasks.length > 0 ? "ok" : "empty",
+      database: databaseConfigured ? "configured" : "missing_DATABASE_URL",
       wallet: "browser_eip1193",
-      blockchain: "not_connected",
-      agentOrchestrator: "not_connected"
+      blockchain: process.env.NEXT_PUBLIC_CHAIN_ID ? "configured" : "missing_chain_config",
+      agentOrchestrator: process.env.AAA_AGENT_ORCHESTRATOR_URL ? "configured" : "not_configured"
     }
   });
 }

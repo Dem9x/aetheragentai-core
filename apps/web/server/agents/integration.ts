@@ -1,7 +1,6 @@
 import { createHash, timingSafeEqual } from "node:crypto";
 import { z } from "zod";
 import { prisma } from "@/lib/server/prisma";
-import { readData, writeData } from "@/lib/server/datastore";
 import type { AgentIntegration, AgentRuntimeType } from "@/types";
 
 export const agentIntegrationSchema = z.object({
@@ -37,64 +36,51 @@ export async function saveAgentIntegration(agentId: string, input: AgentIntegrat
     lastCheckedAt: new Date().toISOString()
   };
 
-  try {
-    const agentExists = await prisma.agent.findUnique({ where: { id: agentId }, select: { id: true } });
-    if (!agentExists) {
-      throw new Error("Agent not found in Prisma; using local datastore integration");
-    }
-
-    await prisma.agentIntegration.upsert({
-      where: { agentId },
-      create: {
-        agentId,
-        runtimeType: integration.runtimeType,
-        agentEndpoint: integration.agentEndpoint,
-        publicKey: integration.publicKey,
-        webhookSecretHash: integration.webhookSecretHash,
-        capabilities: integration.capabilities,
-        status: integration.status,
-        lastCheckedAt: new Date()
-      },
-      update: {
-        runtimeType: integration.runtimeType,
-        agentEndpoint: integration.agentEndpoint,
-        publicKey: integration.publicKey,
-        webhookSecretHash: integration.webhookSecretHash,
-        capabilities: integration.capabilities,
-        status: integration.status,
-        lastCheckedAt: new Date()
-      }
-    });
-  } catch {
-    const data = await readData();
-    data.agentIntegrations = { ...(data.agentIntegrations ?? {}), [agentId]: integration };
-    data.agents = data.agents.map((agent) => agent.id === agentId ? { ...agent, integration } : agent);
-    await writeData(data);
+  const agentExists = await prisma.agent.findUnique({ where: { id: agentId }, select: { id: true } });
+  if (!agentExists) {
+    throw new Error("Agent not found. Register the agent in the database before configuring runner integration.");
   }
+
+  await prisma.agentIntegration.upsert({
+    where: { agentId },
+    create: {
+      agentId,
+      runtimeType: integration.runtimeType,
+      agentEndpoint: integration.agentEndpoint,
+      publicKey: integration.publicKey,
+      webhookSecretHash: integration.webhookSecretHash,
+      capabilities: integration.capabilities,
+      status: integration.status,
+      lastCheckedAt: new Date()
+    },
+    update: {
+      runtimeType: integration.runtimeType,
+      agentEndpoint: integration.agentEndpoint,
+      publicKey: integration.publicKey,
+      webhookSecretHash: integration.webhookSecretHash,
+      capabilities: integration.capabilities,
+      status: integration.status,
+      lastCheckedAt: new Date()
+    }
+  });
 
   return integration;
 }
 
 export async function getAgentIntegration(agentId: string) {
-  try {
-    const integration = await prisma.agentIntegration.findUnique({ where: { agentId } });
-    if (integration) {
-      return {
-        runtimeType: integration.runtimeType as AgentRuntimeType,
-        agentEndpoint: integration.agentEndpoint ?? undefined,
-        publicKey: integration.publicKey ?? undefined,
-        webhookSecretHash: integration.webhookSecretHash ?? undefined,
-        capabilities: integration.capabilities,
-        status: integration.status as AgentIntegration["status"],
-        lastCheckedAt: integration.lastCheckedAt?.toISOString()
-      };
-    }
-  } catch {
-    // fall through to local datastore
+  const integration = await prisma.agentIntegration.findUnique({ where: { agentId } });
+  if (integration) {
+    return {
+      runtimeType: integration.runtimeType as AgentRuntimeType,
+      agentEndpoint: integration.agentEndpoint ?? undefined,
+      publicKey: integration.publicKey ?? undefined,
+      webhookSecretHash: integration.webhookSecretHash ?? undefined,
+      capabilities: integration.capabilities,
+      status: integration.status as AgentIntegration["status"],
+      lastCheckedAt: integration.lastCheckedAt?.toISOString()
+    };
   }
-
-  const data = await readData();
-  return data.agentIntegrations?.[agentId] ?? data.agents.find((agent) => agent.id === agentId)?.integration ?? null;
+  return null;
 }
 
 export async function testHostedAgent(endpoint: string) {

@@ -4,14 +4,13 @@ import { useEffect, useMemo, useState } from "react";
 import type { Agent, AgentType } from "@/types";
 import { AgentCard, CreateAgentModal } from "@/components/agents/AgentComponents";
 import { SearchBox, StatCard } from "@/components/shared/Primitives";
-import { agents as baseAgents } from "@/lib/seed-data";
 import { apiRequest } from "@/lib/api/client";
 import { formatInteger } from "@/lib/utils/format";
 
 const filters: ("All" | AgentType)[] = ["All", "Coding Agent", "Research Agent", "Blockchain Analysis Agent", "Trading Agent", "Security Agent", "Mathematical Reasoning Agent", "Optimization Agent", "Multi-Modal Agent", "Autonomous Web3 Agent"];
 
 export default function AgentsPage() {
-  const [agents, setAgents] = useState<Agent[]>(baseAgents);
+  const [agents, setAgents] = useState<Agent[]>([]);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<(typeof filters)[number]>("All");
   const [loading, setLoading] = useState(true);
@@ -41,7 +40,7 @@ export default function AgentsPage() {
       <div className="grid gap-2 md:grid-cols-4">
         <StatCard label="User Agents" value={agents.length.toString()} />
         <StatCard label="Total Rewards" value={`${formatInteger(agents.reduce((sum, agent) => sum + agent.totalRewards, 0))} AAA`} tone="green" />
-        <StatCard label="Avg Reputation" value={Math.round(agents.reduce((sum, agent) => sum + agent.reputation, 0) / agents.length).toString()} tone="violet" />
+        <StatCard label="Avg Reputation" value={agents.length ? Math.round(agents.reduce((sum, agent) => sum + agent.reputation, 0) / agents.length).toString() : "0"} tone="violet" />
         <StatCard label="Solved Tasks" value={formatInteger(agents.reduce((sum, agent) => sum + agent.solvedTasks, 0))} tone="amber" />
       </div>
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -53,7 +52,7 @@ export default function AgentsPage() {
       <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-thin">
         {filters.map((item) => <button key={item} onClick={() => setFilter(item)} className={`shrink-0 border px-3 py-2 font-mono text-xs ${filter === item ? "border-cyan-300/30 bg-cyan-300/8 text-cyan-100" : "border-slate-800 text-slate-500"}`}>{item}</button>)}
       </div>
-      {visible.length ? <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{visible.map((agent) => <AgentCard agent={agent} key={agent.id} />)}</div> : <div className="border border-slate-800 p-8 text-center text-slate-500">No agents match this filter.</div>}
+      {visible.length ? <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{visible.map((agent) => <AgentCard agent={agent} key={agent.id} />)}</div> : <div className="border border-slate-800 p-8 text-center text-slate-500">No registered agents found in the database.</div>}
     </div>
   );
 }

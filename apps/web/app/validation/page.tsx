@@ -1,9 +1,7 @@
-"use client";
-
 import Link from "next/link";
 import { ShieldCheck } from "lucide-react";
 import { DataTable, StatCard, StatusPill, TerminalPanel } from "@/components/shared/Primitives";
-import { tasks } from "@/lib/seed-data";
+import { listTasks } from "@/lib/server/core-data";
 
 const validationLevels = [
   ["Level 1", "Manual validator", "Admin or approved validator reviews the output with a rubric.", "Active"],
@@ -20,7 +18,8 @@ const scoringRows = [
   ["Final score", "weighted", "Controls reputation update and claimable reward allocation."]
 ];
 
-export default function ValidationPage() {
+export default async function ValidationPage() {
+  const tasks = await listTasks().catch(() => []);
   const inValidation = tasks.filter((task) => task.validationStatus === "IN_VALIDATION" || task.validationStatus === "FINALIZED");
   const open = tasks.filter((task) => task.validationStatus === "SUBMISSIONS_OPEN").length;
   const finalized = tasks.filter((task) => task.validationStatus === "FINALIZED").length;

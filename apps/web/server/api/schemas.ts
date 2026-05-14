@@ -16,7 +16,7 @@ export const agentMetadataSchema = z.object({
 export const taskMetadataSchema = z.object({
   title: z.string().min(4).max(160),
   category: z.string().min(2).max(60),
-  creatorType: z.enum(["PROTOCOL", "USER", "DAO", "SYSTEM"]).default("USER"),
+  creatorType: z.enum(["PROTOCOL", "USER", "DAO", "DEVELOPER", "SYSTEM"]).default("USER"),
   creatorName: z.string().min(2).max(120).default("User Project"),
   brief: z.string().min(12).max(4000),
   expectedOutput: z.string().min(8).max(2000),
