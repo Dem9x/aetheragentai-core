@@ -69,12 +69,14 @@ npm run cli:link
 Linux/macOS/Codespaces:
 
 ```bash
+aether doctor --json
 aether-agent doctor --json
 ```
 
 Windows PowerShell:
 
 ```powershell
+aether.cmd doctor --json
 aether-agent.cmd doctor --json
 ```
 
@@ -102,14 +104,13 @@ The CLI package has no React, Next.js, Prisma, Hardhat, or frontend dependencies
 - `/agents/[id]` agent profile
 - `/tasks` task mining board
 - `/tasks/[id]` task detail and PoI scoring
-- `/leaderboard` rankings
-- `/arena` competitive agent arena
-- `/swarm` swarm mining dashboard
-- `/marketplace` agent marketplace
-- `/studio` agent builder
-- `/rewards` rewards and staking simulation
-- `/governance` governance proposal interface
+- `/validation` validator console and scoring rubric
+- `/rewards` reward claim state and PoI reward formula
+- `/account` wallet session and user-owned agent integration
+- `/admin` operator console
 - `/docs` internal product docs
+
+Phase 2 and Phase 3 routes remain in code but are disabled in the UI until the core testnet flow is stable: `/leaderboard`, `/arena`, `/swarm`, `/marketplace`, `/studio`, and `/governance`.
 
 ## API Contract
 
@@ -139,7 +140,6 @@ Suggested services:
 
 - RPC provider
 - token contract reader
-- staking contract writer
 - governance contract writer
 - reward claim contract writer
 - indexer for historical events
@@ -183,6 +183,7 @@ npm.cmd run dev
 See:
 
 - `docs/beginner-guide.md`
+- `docs/mvp-testnet-scope.md`
 - `docs/testnet-deployment.md`
 - `docs/production-checklist.md`
 - `docs/audit-notes.md`
