@@ -118,6 +118,9 @@ Set:
 - `INDEXER_FROM_BLOCK`
 - `INDEXER_MAX_BLOCK_RANGE`
 - `INDEXER_MAX_CHUNKS_PER_RUN`
+- `INDEXER_REQUEST_DELAY_MS`
+- `INDEXER_RETRY_DELAY_MS`
+- `INDEXER_MAX_RETRIES`
 
 `EVM_RPC_URL` can use the same value as `BASE_SEPOLIA_RPC_URL`.
 
@@ -125,10 +128,15 @@ Alchemy Free tier only allows `eth_getLogs` over a small block range. Keep this 
 
 ```env
 INDEXER_MAX_BLOCK_RANGE=10
-INDEXER_MAX_CHUNKS_PER_RUN=25
+INDEXER_MAX_CHUNKS_PER_RUN=5
+INDEXER_REQUEST_DELAY_MS=350
+INDEXER_RETRY_DELAY_MS=1500
+INDEXER_MAX_RETRIES=2
 ```
 
 If `completed` is `false` in the indexer response, run the endpoint again. Each run advances the saved `IndexerState`.
+
+If Alchemy says compute units per second are exceeded, lower `INDEXER_MAX_CHUNKS_PER_RUN` to `1` or increase `INDEXER_REQUEST_DELAY_MS` to `1000`.
 
 Then call:
 
