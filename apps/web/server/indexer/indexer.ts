@@ -53,12 +53,17 @@ export async function runIndexerOnce() {
   while (chunkFromBlock <= cappedToBlock && chunks < maxChunks) {
     const chunkToBlock = minBlock(cappedToBlock, chunkFromBlock + maxRange - BigInt(1));
     for (const event of indexedEvents) {
-      const logs = await client.getLogs({
-        address: addresses,
-        event,
-        fromBlock: chunkFromBlock,
-        toBlock: chunkToBlock
-      });
+      await sleep(config.requestDelayMs);
+      const logs = await getLogsWithRetry(
+        () => client.getLogs({
+          address: addresses,
+          event,
+          fromBlock: chunkFromBlock,
+          toBlock: chunkToBlock
+        }),
+        config.maxRetries,
+        config.retryDelayMs
+      );
 
       for (const log of logs) {
         await prisma.indexedEvent.upsert({
@@ -102,4 +107,24 @@ export async function runIndexerOnce() {
 
 function minBlock(a: bigint, b: bigint) {
   return a < b ? a : b;
+}
+
+async function getLogsWithRetry<T>(request: () => Promise<T>, maxRetries: number, retryDelayMs: number) {
+  let attempt = 0;
+  while (true) {
+    try {
+      return await request();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      const retryable = message.includes("compute units") || message.includes("rate limit") || message.includes("429") || message.includes("exceeded");
+      if (!retryable || attempt >= maxRetries) throw error;
+      await sleep(retryDelayMs * (attempt + 1));
+      attempt += 1;
+    }
+  }
+}
+
+function sleep(ms: number) {
+  if (ms <= 0) return Promise.resolve();
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
