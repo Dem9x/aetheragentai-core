@@ -10,6 +10,14 @@ export async function POST(request: Request) {
   try {
     return apiSuccess(await runIndexerOnce());
   } catch (error) {
-    return apiError("INDEXER_FAILED", error instanceof Error ? error.message : "Indexer failed", 500);
+    const message = error instanceof Error ? error.message : "Indexer failed";
+    if (message.includes("does not exist") || message.includes("public.IndexerState")) {
+      return apiError(
+        "DATABASE_NOT_MIGRATED",
+        "Database tables are missing. Run `npm run db:generate` and `npm run db:migrate` against the same DATABASE_URL, then restart the web server.",
+        500
+      );
+    }
+    return apiError("INDEXER_FAILED", message, 500);
   }
 }
