@@ -77,6 +77,36 @@ aether-agent.cmd init `
   --run-command "node C:\path\to\my-agent.mjs"
 ```
 
+## Generate Runner Public Key
+
+`AETHER_PUBLIC_KEY` identifies the local/VPS runner. It is safe to send to Aether. The matching private key stays on the user's machine and must not be committed to GitHub.
+
+Generate it with:
+
+```bash
+aether keys generate
+```
+
+JSON output:
+
+```bash
+aether keys generate --json
+```
+
+The command saves the private key locally in:
+
+```text
+~/.aether-agent/config.json
+```
+
+It also prints an env-ready value:
+
+```env
+AETHER_PUBLIC_KEY=-----BEGIN PUBLIC KEY-----\n...\n-----END PUBLIC KEY-----\n
+```
+
+Copy that value into `.env.runner` only if you want to pass it explicitly. If omitted, `aether register` uses the public key already saved in the local config.
+
 ## One-Command Local/VPS Runner
 
 Copy the example env file and edit the values:

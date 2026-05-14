@@ -98,6 +98,14 @@ The CLI package has no React, Next.js, Prisma, Hardhat, or frontend dependencies
 
 ### Local Runner / VPS Example
 
+Generate a runner key pair first:
+
+```bash
+aether keys generate
+```
+
+The public key is safe to register with Aether. The private key stays in `~/.aether-agent/config.json`.
+
 Linux VPS, macOS, WSL, or Codespaces:
 
 ```bash

@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 import { spawn } from "node:child_process";
-import { createHash } from "node:crypto";
+import { createHash, generateKeyPairSync } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 
 const VERSION = "0.1.0";
 const CONFIG_PATH = process.env.AETHER_AGENT_CONFIG || join(homedir(), ".aether-agent", "config.json");
+const KEY_ALGORITHM = "ed25519";
 
 function parseArgs(argv) {
   const args = { _: [] };
@@ -47,6 +48,18 @@ function loadConfig() {
 function saveConfig(config) {
   mkdirSync(dirname(CONFIG_PATH), { recursive: true });
   writeFileSync(CONFIG_PATH, `${JSON.stringify(config, null, 2)}\n`, "utf8");
+}
+
+function generateRunnerKeyPair() {
+  const { publicKey, privateKey } = generateKeyPairSync(KEY_ALGORITHM);
+  return {
+    publicKey: publicKey.export({ type: "spki", format: "pem" }),
+    privateKey: privateKey.export({ type: "pkcs8", format: "pem" })
+  };
+}
+
+function pemToEnv(value) {
+  return value.replace(/\n/g, "\\n");
 }
 
 function output(args, payload) {
@@ -96,6 +109,7 @@ function help() {
 Usage:
   aether-agent init --api-url http://localhost:3000 --agent-id agent-orion --runner-secret secret --run-command "node my-agent.js"
   aether-agent doctor [--json]
+  aether-agent keys generate [--json]
   aether-agent login
   aether-agent register --name "Solidity Sentinel" --secret your-secret [--runtime LOCAL_RUNNER]
   aether-agent tasks [--agent-id id] [--json]
@@ -184,8 +198,35 @@ async function main() {
           apiReachable: reachable,
           agentIdConfigured: Boolean(config.agentId),
           runnerSecretConfigured: Boolean(config.runnerSecret),
+          publicKeyConfigured: Boolean(config.publicKey),
+          privateKeyConfigured: Boolean(config.privateKey),
           runCommandConfigured: Boolean(config.runCommand),
           health
+        }
+      });
+      return;
+    }
+
+    if (command === "keys") {
+      const subcommand = args._[1];
+      if (subcommand !== "generate") {
+        fail(args, "UNKNOWN_KEYS_COMMAND", "Use: aether keys generate [--json]");
+      }
+      const keyPair = generateRunnerKeyPair();
+      const next = { ...config, publicKey: keyPair.publicKey, privateKey: keyPair.privateKey, keyAlgorithm: KEY_ALGORITHM };
+      saveConfig(next);
+      output(args, {
+        ok: true,
+        message:
+          `Generated ${KEY_ALGORITHM} runner key pair and saved it to ${CONFIG_PATH}\n` +
+          "Add this public key to AETHER_PUBLIC_KEY when registering:\n" +
+          `AETHER_PUBLIC_KEY=${pemToEnv(keyPair.publicKey)}`,
+        data: {
+          algorithm: KEY_ALGORITHM,
+          configPath: CONFIG_PATH,
+          publicKey: keyPair.publicKey,
+          publicKeyEnv: pemToEnv(keyPair.publicKey),
+          privateKeySaved: true
         }
       });
       return;
@@ -218,7 +259,7 @@ async function main() {
         body: {
           runtimeType: args.runtime ?? "LOCAL_RUNNER",
           agentEndpoint: args.endpoint ?? "",
-          publicKey: args["public-key"] ?? "",
+          publicKey: args["public-key"] ?? process.env.AETHER_PUBLIC_KEY?.replace(/\\n/g, "\n") ?? config.publicKey ?? "",
           webhookSecret: secret,
           capabilities: String(args.capabilities ?? "solidity,audit,research").split(",").map((item) => item.trim()).filter(Boolean)
         }
