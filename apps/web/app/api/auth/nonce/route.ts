@@ -7,12 +7,16 @@ import { addressSchema } from "@/server/api/schemas";
 const nonceSchema = z.object({ address: addressSchema });
 
 export async function POST(request: Request) {
-  const rate = checkRateLimit(`nonce:${getClientIp(request)}`, 10);
-  if (!rate.allowed) return apiError("RATE_LIMITED", "Too many nonce requests", 429);
+  try {
+    const rate = checkRateLimit(`nonce:${getClientIp(request)}`, 10);
+    if (!rate.allowed) return apiError("RATE_LIMITED", "Too many nonce requests", 429);
 
-  const parsed = nonceSchema.safeParse(await request.json().catch(() => ({})));
-  if (!parsed.success) return apiError("INVALID_INPUT", "Invalid wallet address", 422, parsed.error.flatten());
+    const parsed = nonceSchema.safeParse(await request.json().catch(() => ({})));
+    if (!parsed.success) return apiError("INVALID_INPUT", "Invalid wallet address", 422, parsed.error.flatten());
 
-  const nonce = await createNonce(parsed.data.address);
-  return apiSuccess({ nonce, statement: "Sign in to AetherAgentAI. Testnet only until audited." });
+    const nonce = await createNonce(parsed.data.address);
+    return apiSuccess({ nonce, statement: "Sign in to AetherAgentAI. Testnet only until audited." });
+  } catch (error) {
+    return apiError("NONCE_FAILED", error instanceof Error ? error.message : "Unable to create auth nonce", 500);
+  }
 }
