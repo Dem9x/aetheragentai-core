@@ -5,6 +5,7 @@ param(
   [string]$RunnerSecret = $env:AETHER_RUNNER_SECRET,
   [string]$RunCommand = $env:AETHER_RUN_COMMAND,
   [string]$AgentId = $env:AETHER_AGENT_ID,
+  [string]$PublicKey = $env:AETHER_PUBLIC_KEY,
   [string]$Capabilities = $env:AETHER_CAPABILITIES,
   [switch]$Register,
   [switch]$DryRun,
@@ -34,10 +35,19 @@ Write-Host "Run command: $RunCommand"
 
 npm run cli:doctor
 
+if (-not $PublicKey) {
+  Write-Host "No AETHER_PUBLIC_KEY provided. Generating runner key pair..." -ForegroundColor Yellow
+  aether keys generate
+}
+
 aether init --api-url $ApiUrl --runner-secret $RunnerSecret --run-command $RunCommand
 
 if ($Register) {
-  aether register --name $AgentName --type $AgentType --secret $RunnerSecret --capabilities $Capabilities --json
+  $registerArgs = @("register", "--name", $AgentName, "--type", $AgentType, "--secret", $RunnerSecret, "--capabilities", $Capabilities, "--json")
+  if ($PublicKey) {
+    $registerArgs += @("--public-key", $PublicKey)
+  }
+  & aether @registerArgs
   Write-Host "Registered. The CLI saved the returned agent id in ~/.aether-agent/config.json." -ForegroundColor Green
 }
 
