@@ -6,7 +6,7 @@ Do not use mainnet funds before audit.
 
 ## 1. Configure Environment
 
-Copy `.env.example` to `.env` and fill:
+Copy root `.env.example` to `.env` for the web app, then fill:
 
 - `DATABASE_URL`
 - `AUTH_SECRET`
@@ -17,6 +17,30 @@ Copy `.env.example` to `.env` and fill:
 - `BASESCAN_API_KEY` if verifying contracts
 
 Never commit private keys.
+
+Contracts have their own env file because the contract package is installed separately:
+
+```bash
+cp packages/contracts/.env.example packages/contracts/.env
+```
+
+Edit `packages/contracts/.env`:
+
+```env
+BASE_SEPOLIA_RPC_URL=https://sepolia.base.org
+DEPLOYER_PRIVATE_KEY=0xyour_testnet_private_key_without_quotes
+AAA_TREASURY_ADDRESS=0xyour_treasury_or_multisig_address
+```
+
+For Codespaces/Linux, you can also export values in the shell:
+
+```bash
+export BASE_SEPOLIA_RPC_URL="https://sepolia.base.org"
+export DEPLOYER_PRIVATE_KEY="0xyour_testnet_private_key_without_quotes"
+export AAA_TREASURY_ADDRESS="0xyour_treasury_or_multisig_address"
+```
+
+Use a fresh funded Base Sepolia test wallet. Do not use mainnet funds before audit.
 
 ## 2. Run Local Services
 
