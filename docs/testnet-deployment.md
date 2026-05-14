@@ -50,6 +50,15 @@ npm.cmd run db:generate
 npm.cmd run db:migrate
 ```
 
+Codespaces/Linux:
+
+```bash
+npm run db:generate
+npm run db:migrate
+```
+
+If the indexer says `public.IndexerState does not exist`, the web app is connected to a database that has not received Prisma migrations. Re-check `DATABASE_URL`, run the commands above, then restart `npm run dev`.
+
 ## 3. Compile and Test Contracts
 
 ```bash
