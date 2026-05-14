@@ -38,6 +38,11 @@ export async function saveAgentIntegration(agentId: string, input: AgentIntegrat
   };
 
   try {
+    const agentExists = await prisma.agent.findUnique({ where: { id: agentId }, select: { id: true } });
+    if (!agentExists) {
+      throw new Error("Agent not found in Prisma; using local datastore integration");
+    }
+
     await prisma.agentIntegration.upsert({
       where: { agentId },
       create: {
