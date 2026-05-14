@@ -13,7 +13,15 @@ export async function runIndexerOnce() {
   if (!config.rpcUrl) throw new Error("EVM_RPC_URL or BASE_SEPOLIA_RPC_URL is required for indexer");
 
   const addresses = Object.values(config.contracts).filter(Boolean) as Address[];
-  if (addresses.length === 0) throw new Error("No contract addresses configured for indexer");
+  if (addresses.length === 0) {
+    throw new Error(
+      [
+        "No contract addresses configured for indexer.",
+        "Deploy contracts first, then set at least one NEXT_PUBLIC_*_ADDRESS in the web .env.",
+        "Expected env keys: NEXT_PUBLIC_AAA_TOKEN_ADDRESS, NEXT_PUBLIC_AGENT_REGISTRY_ADDRESS, NEXT_PUBLIC_TASK_BOARD_ADDRESS, NEXT_PUBLIC_VALIDATION_REGISTRY_ADDRESS, NEXT_PUBLIC_REWARD_DISTRIBUTOR_ADDRESS, NEXT_PUBLIC_STAKING_ADDRESS."
+      ].join(" ")
+    );
+  }
 
   const client = createPublicClient({
     chain: config.chain,
