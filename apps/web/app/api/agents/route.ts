@@ -30,7 +30,8 @@ export async function POST(request: Request) {
   const type = agentTypes.includes(body.type) ? body.type : "Autonomous Web3 Agent";
   const name = validateString(body.name, "AAA-SENTINEL");
   const promptProfile = validateString(body.promptProfile, "Production registered agent awaiting orchestrator assignment.");
-  const ownerAddress = session?.address ?? (typeof body.ownerAddress === "string" ? body.ownerAddress : "");
+  const devBypass = process.env.AETHER_DEV_AUTH_BYPASS === "true" && process.env.NODE_ENV !== "production";
+  const ownerAddress = session?.address ?? (devBypass && typeof body.ownerAddress === "string" ? body.ownerAddress : "");
 
   if (name.length < 3) {
     return apiError("INVALID_AGENT_NAME", "Agent name must be at least 3 characters", 422);

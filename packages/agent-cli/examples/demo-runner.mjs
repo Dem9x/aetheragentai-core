@@ -37,26 +37,7 @@ async function main() {
 
   await request("/api/health");
 
-  const agentResult = await request("/api/agents", {
-    method: "POST",
-    body: {
-      name: "Demo Solidity Sentinel",
-      type: "Security Agent",
-      promptProfile: "Demo runner agent registered by npm run demo:runner."
-    }
-  });
-  const agentId = agentResult.agent.id;
-
-  await request(`/api/agents/${agentId}/integration`, {
-    method: "POST",
-    body: {
-      runtimeType: "LOCAL_RUNNER",
-      agentEndpoint: "",
-      publicKey: publicKeyPem,
-      webhookSecret: runnerSecret,
-      capabilities: ["solidity", "audit", "security", "web3"]
-    }
-  });
+  const agentId = await registerDemoAgent({ publicKeyPem, runnerSecret });
 
   const taskData = await signedRequest(privateKeyPem, agentId, "/api/runner/tasks");
   const task = taskData.tasks[0] ?? await fallbackTask();
@@ -98,6 +79,76 @@ async function main() {
       next: "Open /account, /tasks, or /validation in the web app to inspect the demo submission."
     }
   }, null, 2));
+}
+
+async function registerDemoAgent({ publicKeyPem, runnerSecret }) {
+  try {
+    const agentResult = await request("/api/agents", {
+      method: "POST",
+      body: {
+        name: "Demo Solidity Sentinel",
+        type: "Security Agent",
+        promptProfile: "Demo runner agent registered by npm run demo:runner.",
+        ownerAddress: "0x0000000000000000000000000000000000000000"
+      }
+    });
+    const agentId = agentResult.agent.id;
+    await request(`/api/agents/${agentId}/integration`, {
+      method: "POST",
+      body: {
+        runtimeType: "LOCAL_RUNNER",
+        agentEndpoint: "",
+        publicKey: publicKeyPem,
+        webhookSecret: runnerSecret,
+        capabilities: ["solidity", "audit", "security", "web3"]
+      }
+    });
+    return agentId;
+  } catch {
+    return registerDemoAgentDirectly({ publicKeyPem, runnerSecret });
+  }
+}
+
+async function registerDemoAgentDirectly({ publicKeyPem, runnerSecret }) {
+  const { PrismaClient } = await import("@prisma/client");
+  const prisma = new PrismaClient();
+  try {
+    const metadata = {
+      name: "Demo Solidity Sentinel",
+      agentType: "Security Agent",
+      description: "Demo runner agent registered locally by npm run demo:runner.",
+      version: "1.0.0"
+    };
+    const metadataHash = sha256Hex(JSON.stringify(metadata));
+    const agent = await prisma.agent.create({
+      data: {
+        ownerAddress: "0x0000000000000000000000000000000000000000",
+        metadataURI: `local://demo-agent/${metadataHash}`,
+        metadataHash,
+        name: metadata.name,
+        agentType: metadata.agentType,
+        active: true,
+        stats: { create: {} }
+      }
+    });
+    await prisma.agentIntegration.create({
+      data: {
+        agentId: agent.id,
+        runtimeType: "LOCAL_RUNNER",
+        publicKey: publicKeyPem,
+        webhookSecretHash: `sha256:${createHash("sha256").update(runnerSecret).digest("hex")}`,
+        capabilities: ["solidity", "audit", "security", "web3"],
+        status: "ACTIVE",
+        lastCheckedAt: new Date()
+      }
+    });
+    await prisma.activityLog.create({
+      data: { type: "AGENT_REGISTERED", severity: "success", message: `Demo agent registered: ${agent.name}` }
+    });
+    return agent.id;
+  } finally {
+    await prisma.$disconnect();
+  }
 }
 
 async function request(path, options = {}) {

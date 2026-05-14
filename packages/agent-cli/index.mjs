@@ -86,12 +86,46 @@ function fail(args, code, message, details) {
 }
 
 async function request(config, path, options = {}) {
+  return runnerFetch(config, options.method ?? "GET", path, options.body, options);
+}
+
+function isProductionMode() {
+  return process.env.NODE_ENV === "production" || process.env.AETHER_MODE === "production";
+}
+
+function hasSignedAuth(config) {
+  return Boolean(config.agentId && config.publicKey && config.privateKey);
+}
+
+function signRunnerHeaders(config, method, path, bodyText, agentId = config.agentId) {
+  if (!config.privateKey || !agentId) return {};
+  const timestamp = String(Date.now());
+  const nonce = randomUUID();
+  const bodyHash = sha256Hex(bodyText || "");
+  const payload = [method.toUpperCase(), path, timestamp, nonce, bodyHash].join("\n");
+  const signature = sign(null, Buffer.from(payload), createPrivateKey(config.privateKey)).toString("base64");
+  return {
+    "x-agent-id": agentId,
+    "x-runner-timestamp": timestamp,
+    "x-runner-nonce": nonce,
+    "x-runner-signature": signature
+  };
+}
+
+async function runnerFetch(config, method, path, body, options = {}) {
   const apiUrl = (options.apiUrl || config.apiUrl || process.env.AETHER_API_URL || "http://localhost:3000").replace(/\/$/, "");
-  const method = options.method ?? "GET";
-  const bodyText = options.body ? JSON.stringify(options.body) : "";
+  const bodyText = body ? JSON.stringify(body) : "";
+  const agentId = options.agentId ?? config.agentId;
+  const signedHeaders = signRunnerHeaders(config, method, path, bodyText, agentId);
+  const legacySecret = options.runnerSecret ?? config.runnerSecret;
+  const legacyAllowed = !isProductionMode() && !Object.keys(signedHeaders).length && legacySecret;
+  if ((path.startsWith("/api/runner/") || path.includes("/integration")) && !Object.keys(signedHeaders).length && !legacyAllowed && isProductionMode()) {
+    throw new Error("Production runner requests require privateKey/publicKey signed auth. Run `aether keys generate` and register the public key.");
+  }
   const headers = {
     "content-type": "application/json",
-    ...runnerSignatureHeaders(config, method, path, bodyText),
+    ...signedHeaders,
+    ...(legacyAllowed ? { "x-agent-id": agentId ?? "", "x-runner-secret": legacySecret } : {}),
     ...(options.headers ?? {})
   };
   const response = await fetch(`${apiUrl}${path}`, {
@@ -106,21 +140,6 @@ async function request(config, path, options = {}) {
   return payload.data;
 }
 
-function runnerSignatureHeaders(config, method, path, bodyText) {
-  if (!config.privateKey || !config.agentId) return {};
-  const timestamp = String(Date.now());
-  const nonce = randomUUID();
-  const bodyHash = sha256Hex(bodyText || "");
-  const payload = [method.toUpperCase(), path, timestamp, nonce, bodyHash].join("\n");
-  const signature = sign(null, Buffer.from(payload), createPrivateKey(config.privateKey)).toString("base64");
-  return {
-    "x-agent-id": config.agentId,
-    "x-runner-timestamp": timestamp,
-    "x-runner-nonce": nonce,
-    "x-runner-signature": signature
-  };
-}
-
 function help() {
   return `Aether Agent Runner ${VERSION}
 
@@ -131,7 +150,7 @@ Usage:
   aether-agent status [--json]
   aether-agent keys generate [--json]
   aether-agent login
-  aether-agent register --name "Solidity Sentinel" --secret your-secret [--runtime LOCAL_RUNNER]
+  aether-agent register --name "Solidity Sentinel" --owner-address 0x... [--runtime LOCAL_RUNNER]
   aether-agent tasks [--agent-id id] [--json]
   aether-agent run --agent-id id [--once] [--dry-run] [--json]
   aether-agent submit --task-id id --agent-id id --summary "..." [--confidence 0.87]
@@ -221,10 +240,13 @@ async function main() {
           apiUrl: config.apiUrl ?? process.env.AETHER_API_URL ?? "http://localhost:3000",
           apiReachable: reachable,
           agentIdConfigured: Boolean(config.agentId),
-          runnerSecretConfigured: Boolean(config.runnerSecret),
           publicKeyConfigured: Boolean(config.publicKey),
           privateKeyConfigured: Boolean(config.privateKey),
+          signedAuthReady: hasSignedAuth(config),
+          legacySecretFallbackAvailable: Boolean(config.runnerSecret) && !isProductionMode(),
+          legacySecretConfigured: Boolean(config.runnerSecret),
           runCommandConfigured: Boolean(config.runCommand),
+          mode: isProductionMode() ? "production" : "development",
           health
         }
       });
@@ -259,7 +281,7 @@ async function main() {
     if (command === "login") {
       output(args, {
         ok: true,
-        message: "Wallet SIWE login is browser-based for now. Use the web app /account to sign in; CLI runner authenticates with x-agent-id + x-runner-secret."
+        message: "Wallet SIWE login is browser-based for now. Use /account to sign in. CLI runner requests authenticate with x-agent-id plus Ed25519 signed headers."
       });
       return;
     }
@@ -267,28 +289,32 @@ async function main() {
     if (command === "register") {
       const name = args.name;
       if (!name) fail(args, "MISSING_NAME", "--name is required");
+      const keys = config.privateKey && config.publicKey ? { publicKey: config.publicKey, privateKey: config.privateKey } : generateRunnerKeyPair();
+      const ownerAddress = args["owner-address"] ?? process.env.AETHER_OWNER_ADDRESS;
+      if (!ownerAddress) fail(args, "MISSING_OWNER_ADDRESS", "--owner-address or AETHER_OWNER_ADDRESS is required");
       const secret = args.secret ?? config.runnerSecret;
-      if (!secret) fail(args, "MISSING_SECRET", "--secret or config runnerSecret is required");
       const agentResult = await request(config, "/api/agents", {
         method: "POST",
         body: {
           name,
           type: args.type ?? "Autonomous Web3 Agent",
-          promptProfile: "User-owned agent registered through Aether Agent Runner."
+          promptProfile: "User-owned agent registered through Aether Agent Runner.",
+          ownerAddress
         }
       });
       const agentId = agentResult.agent.id;
-      const integration = await request(config, `/api/agents/${agentId}/integration`, {
+      const signedConfig = { ...config, agentId, publicKey: keys.publicKey, privateKey: keys.privateKey };
+      const integration = await request(signedConfig, `/api/agents/${agentId}/integration`, {
         method: "POST",
         body: {
           runtimeType: args.runtime ?? "LOCAL_RUNNER",
           agentEndpoint: args.endpoint ?? "",
-          publicKey: args["public-key"] ?? process.env.AETHER_PUBLIC_KEY?.replace(/\\n/g, "\n") ?? config.publicKey ?? "",
-          webhookSecret: secret,
+          publicKey: args["public-key"] ?? process.env.AETHER_PUBLIC_KEY?.replace(/\\n/g, "\n") ?? keys.publicKey,
+          webhookSecret: secret ?? "",
           capabilities: String(args.capabilities ?? "solidity,audit,research").split(",").map((item) => item.trim()).filter(Boolean)
         }
       });
-      saveConfig({ ...config, agentId, runnerSecret: secret });
+      saveConfig({ ...config, agentId, publicKey: keys.publicKey, privateKey: keys.privateKey, keyAlgorithm: KEY_ALGORITHM, ...(secret ? { runnerSecret: secret } : {}) });
       output(args, {
         ok: true,
         data: { agent: agentResult.agent, integration: integration.integration, configPath: CONFIG_PATH }
@@ -298,10 +324,10 @@ async function main() {
 
     if (command === "tasks") {
       const agentId = args["agent-id"] ?? config.agentId;
-      const secret = args["runner-secret"] ?? config.runnerSecret;
       if (!agentId) fail(args, "MISSING_AGENT_ID", "--agent-id or config agentId is required");
       const data = await request(config, "/api/runner/tasks", {
-        headers: { "x-agent-id": agentId, "x-runner-secret": secret ?? "" }
+        agentId,
+        runnerSecret: args["runner-secret"]
       });
       output(args, { ok: true, data });
       return;
@@ -311,11 +337,11 @@ async function main() {
       const taskId = args["task-id"];
       const agentId = args["agent-id"] ?? config.agentId;
       const summary = args.summary;
-      const secret = args["runner-secret"] ?? config.runnerSecret;
       if (!taskId || !agentId || !summary) fail(args, "MISSING_SUBMIT_FIELDS", "--task-id, --agent-id/config, and --summary are required");
       const data = await request(config, "/api/runner/submissions", {
         method: "POST",
-        headers: { "x-runner-secret": secret ?? "" },
+        agentId,
+        runnerSecret: args["runner-secret"],
         body: {
           taskId,
           agentId,
@@ -331,13 +357,13 @@ async function main() {
 
     if (command === "run") {
       const agentId = args["agent-id"] ?? config.agentId;
-      const secret = args["runner-secret"] ?? config.runnerSecret;
       if (!agentId) fail(args, "MISSING_AGENT_ID", "--agent-id or config agentId is required");
       if (!config.runCommand && !args["run-command"] && !args["dry-run"]) {
         fail(args, "MISSING_RUN_COMMAND", "--run-command or config runCommand is required, unless --dry-run is used");
       }
       const taskData = await request(config, "/api/runner/tasks", {
-        headers: { "x-agent-id": agentId, "x-runner-secret": secret ?? "" }
+        agentId,
+        runnerSecret: args["runner-secret"]
       });
       const tasks = args.once ? taskData.tasks.slice(0, 1) : taskData.tasks;
       const results = [];
@@ -349,7 +375,8 @@ async function main() {
         if (!summary) throw new Error("agent output must include summary");
         const submitted = await request(config, "/api/runner/submissions", {
           method: "POST",
-          headers: { "x-runner-secret": secret ?? "" },
+          agentId,
+          runnerSecret: args["runner-secret"],
           body: {
             taskId: task.taskId,
             agentId,

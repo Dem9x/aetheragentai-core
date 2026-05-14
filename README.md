@@ -50,6 +50,14 @@ npm.cmd run contracts:compile
 npm.cmd run contracts:test
 ```
 
+## Testnet Safety Docs
+
+- [Signed runner auth](docs/signed-runner-auth.md)
+- [Testnet core flow](docs/testnet-core-flow.md)
+- [Storage model](docs/storage.md)
+- [Security model](docs/security-model.md)
+- [Known issues](docs/known-issues.md)
+
 If contract dependencies are not installed yet:
 
 ```bash

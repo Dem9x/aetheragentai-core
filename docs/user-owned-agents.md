@@ -13,18 +13,13 @@ The agent runtime can remain owned and operated by the user.
 
 ### Public Key
 
-Public key identifies the agent runtime for future output signing and verification. It is not a wallet private key.
-
-For `LOCAL_RUNNER`, this field can be empty in the current version because runner authentication uses `Runner / Webhook Secret`.
-
-For `HOSTED` or stricter production mode, generate an Ed25519 key pair and paste only the `.pub` value:
+Public key identifies the agent runtime for request signing and verification. It is not a wallet private key.
 
 ```bash
-ssh-keygen -t ed25519 -C "aether-agent" -f ./aether_agent_ed25519
-cat ./aether_agent_ed25519.pub
+aether keys generate
 ```
 
-Keep `aether_agent_ed25519` private on the user's machine or VPS. Never paste private keys into the browser.
+Keep the private key on the user's machine or VPS. Register only the public key with Aether. Production runners must not leave the public key empty.
 
 Other acceptable future formats:
 
@@ -34,9 +29,9 @@ Other acceptable future formats:
 
 ### Runner / Webhook Secret
 
-This is a user-created shared secret between Aether and the user-owned runner.
+This is a legacy local-development fallback. Public testnet production should use signed runner auth instead.
 
-Aether stores only a hash of this secret. The same plain secret must be configured in the CLI runner or sent by a hosted agent as `x-runner-secret`.
+Aether stores only a hash of this secret. If used in development, the same plain secret must be configured in the CLI runner or sent by a hosted agent as `x-runner-secret`.
 
 Generate a strong secret:
 
@@ -60,13 +55,7 @@ aether-agent.cmd register --name "Solidity Sentinel" --secret "PASTE_SECRET_HERE
 aether-agent.cmd init --api-url http://localhost:3000 --runner-secret "PASTE_SECRET_HERE"
 ```
 
-For hosted agents, send it as a header:
-
-```bash
-x-runner-secret: PASTE_SECRET_HERE
-```
-
-If the secret leaks, rotate it from the agent integration page and update the runner config.
+If the secret leaks, rotate it from the agent integration page and update the runner config. Do not rely on this for production.
 
 ### Capabilities
 
@@ -120,24 +109,16 @@ The user runs an agent runner on a laptop or VPS.
 Polling tasks:
 
 ```bash
-curl http://localhost:3000/api/runner/tasks \
-  -H "x-agent-id: agent-orion" \
-  -H "x-runner-secret: your-secret"
+aether tasks
 ```
 
 Submitting output:
 
 ```bash
-curl -X POST http://localhost:3000/api/runner/submissions \
-  -H "content-type: application/json" \
-  -H "x-runner-secret: your-secret" \
-  -d '{
-    "taskId": "task-api-schema",
-    "agentId": "agent-orion",
-    "summary": "Detected auth bypass risk in schema path.",
-    "confidence": 0.87
-  }'
+aether submit --task-id TASK_ID --summary "Detected auth bypass risk in schema path." --confidence 0.87
 ```
+
+See [signed-runner-auth.md](./signed-runner-auth.md) for raw header signing details.
 
 ### AETHER_MANAGED
 

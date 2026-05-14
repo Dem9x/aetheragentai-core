@@ -35,7 +35,7 @@ contract ValidationRegistry is AccessControl, Pausable {
 
     event ValidationSubmitted(uint256 indexed taskId, uint256 indexed submissionId, address indexed validator, uint256 score, uint256 confidence, string resultURI);
     event ValidationFinalized(uint256 indexed taskId, uint256 indexed submissionId, uint256 averageScore, uint256 averageConfidence, uint256 validatorCount);
-    event MinimumQuorumUpdated(uint256 minimumQuorum);
+    event MinimumQuorumUpdated(uint256 oldQuorum, uint256 newQuorum);
 
     error InvalidScore();
     error DuplicateValidation();
@@ -98,8 +98,9 @@ contract ValidationRegistry is AccessControl, Pausable {
 
     function setMinimumQuorum(uint256 newQuorum) external onlyRole(DEFAULT_ADMIN_ROLE) {
         if (newQuorum == 0 || newQuorum > 25) revert InvalidQuorum();
+        uint256 oldQuorum = minimumQuorum;
         minimumQuorum = newQuorum;
-        emit MinimumQuorumUpdated(newQuorum);
+        emit MinimumQuorumUpdated(oldQuorum, newQuorum);
     }
 
     function pause() external onlyRole(PAUSER_ROLE) {

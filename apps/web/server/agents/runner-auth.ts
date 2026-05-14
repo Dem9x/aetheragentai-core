@@ -2,7 +2,18 @@ import { createHash, createPublicKey, verify } from "node:crypto";
 import { getAgentIntegration, verifySecret } from "@/server/agents/integration";
 
 const usedNonces = new Map<string, number>();
-const maxSkewMs = 5 * 60 * 1000;
+// Local development nonce cache. Production should replace this with Redis/Upstash
+// so replay protection is shared across instances and survives restarts.
+
+function maxSkewMs() {
+  const configured = Number(process.env.AETHER_RUNNER_MAX_SKEW_SECONDS);
+  const seconds = Number.isFinite(configured) && configured > 0
+    ? configured
+    : process.env.NODE_ENV === "production"
+      ? 60
+      : 300;
+  return seconds * 1000;
+}
 
 function sha256Hex(text: string) {
   return `0x${createHash("sha256").update(text).digest("hex")}`;
@@ -19,7 +30,7 @@ function rememberNonce(agentId: string, nonce: string) {
   }
   const key = `${agentId}:${nonce}`;
   if (usedNonces.has(key)) return false;
-  usedNonces.set(key, now + maxSkewMs);
+  usedNonces.set(key, now + maxSkewMs());
   return true;
 }
 
@@ -27,6 +38,9 @@ export async function verifyRunnerRequest(request: Request, agentId: string, bod
   const integration = await getAgentIntegration(agentId);
   if (!integration) {
     return { ok: false as const, status: 404, code: "INTEGRATION_NOT_FOUND", message: "Agent integration is not configured" };
+  }
+  if (integration.status !== "ACTIVE") {
+    return { ok: false as const, status: 403, code: "RUNNER_INACTIVE", message: "Agent integration is not active" };
   }
 
   const timestamp = request.headers.get("x-runner-timestamp") ?? "";
@@ -36,7 +50,7 @@ export async function verifyRunnerRequest(request: Request, agentId: string, bod
 
   if (integration.publicKey) {
     const issuedAt = Number(timestamp);
-    if (!timestamp || !Number.isFinite(issuedAt) || Math.abs(Date.now() - issuedAt) > maxSkewMs) {
+    if (!timestamp || !Number.isFinite(issuedAt) || Math.abs(Date.now() - issuedAt) > maxSkewMs()) {
       return { ok: false as const, status: 401, code: "INVALID_RUNNER_TIMESTAMP", message: "Runner timestamp is missing, invalid, or expired" };
     }
     if (!nonce || !rememberNonce(agentId, nonce)) {
@@ -55,8 +69,12 @@ export async function verifyRunnerRequest(request: Request, agentId: string, bod
     return { ok: true as const, integration };
   }
 
-  if (process.env.NODE_ENV === "production") {
+  const legacyExplicitlyAllowed = process.env.AETHER_ALLOW_LEGACY_RUNNER_SECRET === "true";
+  if (process.env.NODE_ENV === "production" && !legacyExplicitlyAllowed) {
     return { ok: false as const, status: 401, code: "RUNNER_PUBLIC_KEY_REQUIRED", message: "Production runners require signed requests with a registered public key" };
+  }
+  if (process.env.NODE_ENV === "production" && legacyExplicitlyAllowed) {
+    console.warn("AETHER_ALLOW_LEGACY_RUNNER_SECRET=true is enabled; legacy runner secret auth should only be temporary.");
   }
 
   const runnerSecret = request.headers.get("x-runner-secret") ?? "";
