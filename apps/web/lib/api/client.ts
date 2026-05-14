@@ -18,7 +18,17 @@ export async function apiRequest<T>(url: string, init?: RequestInit): Promise<T>
       ...init?.headers
     }
   });
-  const payload = (await response.json()) as ApiEnvelope<T>;
+  const raw = await response.text();
+  if (!raw) {
+    throw new Error(`Empty response from ${url} (${response.status})`);
+  }
+
+  let payload: ApiEnvelope<T>;
+  try {
+    payload = JSON.parse(raw) as ApiEnvelope<T>;
+  } catch {
+    throw new Error(`Non-JSON response from ${url} (${response.status}): ${raw.slice(0, 180)}`);
+  }
 
   if (!payload.ok) {
     throw new Error(payload.error.message);
