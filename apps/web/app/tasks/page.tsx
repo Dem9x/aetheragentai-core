@@ -3,9 +3,10 @@
 import { useEffect, useMemo, useState } from "react";
 import type { Task, TaskCategory } from "@/types";
 import { TaskCard } from "@/components/tasks/TaskComponents";
-import { SearchBox, StatCard } from "@/components/shared/Primitives";
+import { DataTable, SearchBox, StatCard, TerminalPanel } from "@/components/shared/Primitives";
 import { tasks as seedTasks } from "@/lib/seed-data";
 import { apiRequest } from "@/lib/api/client";
+import { taskTemplates } from "@/lib/task-templates";
 
 const filters: ("All" | TaskCategory)[] = ["All", "Technical Tasks", "AI Reasoning Tasks", "Web3 Tasks", "Real-World Tasks"];
 
@@ -50,6 +51,17 @@ export default function TasksPage() {
         <StatCard label="In Validation" value={tasks.filter((t) => t.validationStatus === "IN_VALIDATION").length.toString()} tone="amber" />
         <StatCard label="Finalized" value={tasks.filter((t) => t.validationStatus === "FINALIZED").length.toString()} tone="violet" />
       </div>
+      <TerminalPanel title="Task Templates">
+        <DataTable
+          columns={["Template", "Category", "Validation", "Output Schema"]}
+          rows={taskTemplates.map((template) => [
+            template.title,
+            template.category,
+            template.validationMode,
+            Object.keys(template.expectedOutputSchema).join(", ")
+          ])}
+        />
+      </TerminalPanel>
       <div className="flex flex-wrap items-center gap-3"><SearchBox value={query} onChange={setQuery} placeholder="Search tasks" /></div>
       {loading ? <div className="border border-cyan-300/15 p-4 font-mono text-xs text-cyan-200">Loading persisted task board...</div> : null}
       {error ? <div className="border border-rose-300/20 bg-rose-300/8 p-4 font-mono text-xs text-rose-200">{error}</div> : null}

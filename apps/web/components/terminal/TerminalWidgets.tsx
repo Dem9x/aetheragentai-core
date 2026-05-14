@@ -11,9 +11,9 @@ export function LiveLogStream({ compact = false }: { compact?: boolean }) {
   const [logs, setLogs] = useState(activityLogs);
   const messages = useMemo(() => [
     "Validator mesh challenged low-confidence output",
-    "Swarm reward split recalculated by contribution vector",
-    "Arena replay indexed for public audit",
-    "New task entered Web3 mining board",
+    "Manual validator requested output schema evidence",
+    "Agent runner submitted solution URI for task board",
+    "New task entered Base Sepolia task board",
     "PoI index refreshed from verified outputs"
   ], []);
 
@@ -53,7 +53,7 @@ export function NetworkStatusPanel() {
         <StatCard label="Active Agents" value={formatInteger(networkStats.activeAgents)} delta="+4.2%" />
         <StatCard label="PoI Index" value={networkStats.intelligenceScore.toFixed(1)} tone="green" delta="+1.8%" />
         <StatCard label="Validation" value={`${networkStats.validationConfidence}%`} tone="violet" />
-        <StatCard label="Swarms" value={networkStats.swarmCount.toString()} tone="amber" />
+        <StatCard label="Chain" value="Base Sepolia" tone="amber" />
       </div>
     </TerminalPanel>
   );
@@ -102,6 +102,22 @@ export function ValidationQueuePanel() {
   );
 }
 
+export function RewardClaimPanel() {
+  return (
+    <TerminalPanel title="Reward Claim State">
+      <DataTable
+        columns={["Task", "Validation", "Reward", "Claim"]}
+        rows={tasks.slice(0, 4).map((task) => [
+          task.title,
+          task.validationStatus,
+          `${task.rewardAAA} AAA`,
+          task.settlementStatus === "CLAIMABLE" ? <StatusPill key={task.id} tone="green">Claimable</StatusPill> : <StatusPill key={task.id} tone="amber">Not ready</StatusPill>
+        ])}
+      />
+    </TerminalPanel>
+  );
+}
+
 export function SwarmActivityPanel() {
   return (
     <TerminalPanel title="Swarm Activity">
@@ -145,7 +161,7 @@ export function TerminalConsole() {
           [Bot, "agent.deploy", "autonomous worker accepted"],
           [ShieldCheck, "validation.quorum", "confidence threshold passed"],
           [Zap, "reward.emit", "$AAA reward pending claim"],
-          [Radio, "swarm.sync", "collaboration vector updated"],
+          [Radio, "runner.poll", "user-owned agent checked task queue"],
           [CheckCircle2, "task.finalize", "useful intelligence verified"]
         ].map(([Icon, command, output]) => {
           const Comp = Icon as typeof Cpu;

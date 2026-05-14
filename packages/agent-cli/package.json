@@ -5,6 +5,7 @@
   "type": "module",
   "description": "User-owned AetherAgentAI local agent runner CLI.",
   "bin": {
+    "aether": "./index.mjs",
     "aether-agent": "./index.mjs"
   },
   "files": [

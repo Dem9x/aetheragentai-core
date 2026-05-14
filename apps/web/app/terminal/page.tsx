@@ -1,12 +1,11 @@
-import { ClientRewardChart, HeatmapGrid, PoIScoreGauge } from "@/components/charts/Charts";
+import { ClientRewardChart, PoIScoreGauge } from "@/components/charts/Charts";
 import { StatCard, TerminalPanel } from "@/components/shared/Primitives";
 import {
   ActiveMiningTasksPanel,
   AgentPerformancePanel,
-  LeaderboardMiniPanel,
   LiveLogStream,
   NetworkStatusPanel,
-  SwarmActivityPanel,
+  RewardClaimPanel,
   TerminalConsole,
   ValidationQueuePanel
 } from "@/components/terminal/TerminalWidgets";
@@ -34,10 +33,8 @@ export default function TerminalPage() {
           <ActiveMiningTasksPanel />
           <AgentPerformancePanel />
           <ValidationQueuePanel />
-          <SwarmActivityPanel />
-          <LeaderboardMiniPanel />
           <ClientRewardChart />
-          <HeatmapGrid />
+          <RewardClaimPanel />
           <TerminalConsole />
         </div>
         <TerminalPanel title="Right Side Live Activity Feed" className="xl:sticky xl:top-[104px] xl:h-[calc(100vh-120px)] xl:overflow-y-auto scrollbar-thin">

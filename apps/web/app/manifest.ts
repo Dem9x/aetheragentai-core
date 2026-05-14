@@ -4,7 +4,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "AetherAgentAI",
     short_name: "AAA Terminal",
-    description: "The Proof-of-Intelligence Network. Mine Intelligence, Not Hashes.",
+    description: "The Proof-of-Intelligence Network for validated AI task contributions.",
     start_url: "/terminal",
     display: "standalone",
     background_color: "#020305",

@@ -3,29 +3,12 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Bot, Boxes, Coins, Crown, FileText, Gavel, Home, Medal, Network, ShieldCheck, Swords, Terminal, User, Zap } from "lucide-react";
 import { useConnect } from "wagmi";
 import { AetherLogo, WalletConnectButton } from "@/components/shared/Primitives";
 import { networkStats } from "@/lib/seed-data";
+import { coreRoutes } from "@/lib/product/features";
 import { cn } from "@/lib/utils/cn";
 import { formatInteger } from "@/lib/utils/format";
-
-const nav = [
-  { href: "/", label: "Home", icon: Home },
-  { href: "/terminal", label: "Terminal", icon: Terminal },
-  { href: "/agents", label: "Agents", icon: Bot },
-  { href: "/tasks", label: "Tasks", icon: Zap },
-  { href: "/leaderboard", label: "Ranks", icon: Medal },
-  { href: "/arena", label: "Arena", icon: Swords },
-  { href: "/swarm", label: "Swarm", icon: Network },
-  { href: "/marketplace", label: "Market", icon: Boxes },
-  { href: "/studio", label: "Studio", icon: Crown },
-  { href: "/rewards", label: "Rewards", icon: Coins },
-  { href: "/account", label: "Account", icon: User },
-  { href: "/admin", label: "Admin", icon: ShieldCheck },
-  { href: "/governance", label: "Gov", icon: Gavel },
-  { href: "/docs", label: "Docs", icon: FileText }
-];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -66,7 +49,7 @@ export function SidebarNav({ pathname }: { pathname: string }) {
   return (
     <aside className="sticky top-[86px] hidden h-[calc(100vh-86px)] w-20 shrink-0 border-r border-cyan-300/15 bg-[#020305]/80 p-2 lg:block">
       <nav className="flex flex-col gap-1">
-        {nav.map((item) => {
+        {coreRoutes.map((item) => {
           const Icon = item.icon;
           const active = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
           return (
@@ -91,9 +74,10 @@ export function TickerTape() {
     ["ACTIVE AGENTS", formatInteger(networkStats.activeAgents)],
     ["TASKS SOLVED", formatInteger(networkStats.tasksSolved)],
     ["POI INDEX", networkStats.intelligenceScore.toFixed(1)],
-    ["REWARDS", `${(networkStats.rewardsDistributed / 1000000).toFixed(1)}M AAA`],
+    ["REWARDS", `${formatInteger(networkStats.rewardsDistributed)} AAA`],
     ["VALIDATION", `${networkStats.validationConfidence}%`],
-    ["SWARMS", formatInteger(networkStats.swarmCount)]
+    ["SUBMISSIONS", "12"],
+    ["TESTNET", "BASE SEPOLIA"]
   ];
   return (
     <div className="h-8 overflow-hidden border-b border-cyan-300/15 bg-black font-mono text-[11px]">
@@ -121,14 +105,13 @@ export function CommandPalette() {
   const { connect, connectors } = useConnect();
   const commands = [
     ["Go to Terminal", "/terminal"],
-    ["Deploy Agent", "/agents"],
+    ["Register Agent", "/agents"],
     ["Browse Tasks", "/tasks"],
-    ["Open Arena", "/arena"],
-    ["Open Swarm Mining", "/swarm"],
-    ["Open Marketplace", "/marketplace"],
+    ["Open Validation", "/validation"],
     ["View Rewards", "/rewards"],
     ["Open Account", "/account"],
     ["Open Admin", "/admin"],
+    ["Open Docs", "/docs"],
     ["Connect Wallet", "wallet"]
   ];
 

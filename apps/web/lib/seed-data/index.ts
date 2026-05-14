@@ -13,12 +13,12 @@ import type {
 
 export const networkStats: NetworkStats = {
   aaaPrice: 0.0842,
-  activeAgents: 18420,
-  tasksSolved: 927114,
-  intelligenceScore: 91.7,
-  rewardsDistributed: 42888291,
-  validationConfidence: 96.4,
-  swarmCount: 638
+  activeAgents: 24,
+  tasksSolved: 7,
+  intelligenceScore: 82.4,
+  rewardsDistributed: 12840,
+  validationConfidence: 91.2,
+  swarmCount: 0
 };
 
 export const agents: Agent[] = [
@@ -314,8 +314,8 @@ export const tasks: Task[] = [
 export const rewards: Reward[] = [
   { id: "rw-1", source: "Reentrancy audit finalist", amount: 690, status: "Pending", timestamp: "09:42 UTC" },
   { id: "rw-2", source: "API schema validation", amount: 355, status: "Claimable", timestamp: "08:10 UTC" },
-  { id: "rw-3", source: "Arena logic semifinal", amount: 180, status: "Claimed", timestamp: "Yesterday" },
-  { id: "rw-4", source: "Swarm routing task", amount: 940, status: "Pending", timestamp: "Yesterday" }
+  { id: "rw-3", source: "Logic benchmark finalist", amount: 180, status: "Claimed", timestamp: "Yesterday" },
+  { id: "rw-4", source: "DeFi routing validation", amount: 430, status: "Pending", timestamp: "Yesterday" }
 ];
 
 export const leaderboard: LeaderboardEntry[] = agents.map((agent, index) => ({
@@ -377,9 +377,9 @@ export const governanceProposals: GovernanceProposal[] = [
 
 export const activityLogs: ActivityLog[] = [
   { id: "log-1", type: "TASK_SOLVED", message: "ORION-7 solved API schema vulnerability task with PoI 94.1", timestamp: "00:02:14", severity: "success" },
-  { id: "log-2", type: "REWARD", message: "690 $AAA distributed to CIPHER-K validation pool", timestamp: "00:03:02", severity: "success" },
-  { id: "log-3", type: "SWARM", message: "Aether Swarm Delta formed for DeFi route optimization", timestamp: "00:03:44", severity: "info" },
-  { id: "log-4", type: "VALIDATION", message: "Validator quorum reached 96.4% confidence", timestamp: "00:04:11", severity: "info" },
-  { id: "log-5", type: "ARENA", message: "Cybersecurity arena match completed: CIPHER-K wins", timestamp: "00:05:28", severity: "warning" },
+  { id: "log-2", type: "REWARD", message: "355 $AAA moved to claimable state for API schema task", timestamp: "00:03:02", severity: "success" },
+  { id: "log-3", type: "VALIDATION", message: "Local runner submitted output URI for DeFi routing task", timestamp: "00:03:44", severity: "info" },
+  { id: "log-4", type: "VALIDATION", message: "Validator quorum reached 91.2% confidence", timestamp: "00:04:11", severity: "info" },
+  { id: "log-5", type: "TASK_SOLVED", message: "DAO treasury strategy task created with partial funding", timestamp: "00:05:28", severity: "warning" },
   { id: "log-6", type: "AGENT_DEPLOYED", message: "New Autonomous Web3 Agent entered mining queue", timestamp: "00:06:03", severity: "info" }
 ];

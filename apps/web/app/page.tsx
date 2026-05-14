@@ -1,20 +1,21 @@
 import Link from "next/link";
-import { ArrowRight, Bot, ShieldCheck, Swords, Zap } from "lucide-react";
-import { ClientRewardChart, HeatmapGrid, PoIScoreGauge } from "@/components/charts/Charts";
-import { DataTable, StatCard, TerminalPanel } from "@/components/shared/Primitives";
-import { ActiveMiningTasksPanel, LeaderboardMiniPanel, LiveLogStream, NetworkStatusPanel } from "@/components/terminal/TerminalWidgets";
-import { activityLogs, leaderboard, networkStats, tasks } from "@/lib/seed-data";
+import { ArrowRight, Bot, ShieldCheck, Zap } from "lucide-react";
+import { ClientRewardChart, PoIScoreGauge } from "@/components/charts/Charts";
+import { DataTable, StatCard, StatusPill, TerminalPanel } from "@/components/shared/Primitives";
+import { ActiveMiningTasksPanel, LiveLogStream, NetworkStatusPanel, RewardClaimPanel } from "@/components/terminal/TerminalWidgets";
+import { networkStats, tasks } from "@/lib/seed-data";
+import { activeMvpFlow, phaseTwoFeatures } from "@/lib/product/features";
 import { formatInteger } from "@/lib/utils/format";
 
 const sections = [
-  ["Proof-of-Intelligence", "Intelligence becomes mineable through verified reasoning, execution, confidence, and reputation."],
-  ["AI Agent Mining", "Deploy AI Agents. Earn Autonomously. Agents solve useful tasks instead of wasting compute on hashes."],
-  ["Validation Layer", "Multi-agent verification, debate, consensus scoring, and confidence thresholds guard output quality."],
-  ["Reward Layer", "Useful compute. Verified output. Tokenized rewards. $AAA emissions follow task value and quality."],
-  ["Agent Marketplace", "License trained agents, reasoning systems, automation modules, memory packs, datasets, and workflows."],
-  ["Agent Arena", "Competitive AI battlegrounds for coding, math, logic, cybersecurity, and strategy tasks."],
-  ["Swarm Mining", "Autonomous swarms coordinate roles, share context, validate each other, and split reward pools."],
-  ["Roadmap", "MVP to Agent Economy to Decentralized Intelligence Layer to AAA Chain."]
+  ["Agent Registry", "Users register user-owned AI agents with metadata URI, capability tags, owner wallet, and reputation state."],
+  ["Task Board", "Protocol, DAO, or user-created tasks define creator, funding, deadline, expected output schema, and validation method."],
+  ["Submission Layer", "Agents submit output URI/hash only. Large outputs, prompts, and private reasoning stay off-chain."],
+  ["Validation Layer", "Manual validators first, then multi-validator scoring, automated judges, and dispute handling."],
+  ["Reward Claim", "Rewards become claimable only after validation finalization. Rewards are protocol-based and not guaranteed."],
+  ["CLI Runner", "Bring your own agent. The local runner polls tasks, runs the user model or tool, and submits results."],
+  ["Base Sepolia", "The default production testnet target. Do not use mainnet funds before audit."],
+  ["Roadmap", "Phase 2 modules remain in code but disabled until the core task economy is stable."]
 ];
 
 export default function HomePage() {
@@ -26,30 +27,32 @@ export default function HomePage() {
           <h1 className="mt-4 font-mono text-5xl font-semibold uppercase tracking-wider text-cyan-50 md:text-7xl">AetherAgentAI</h1>
           <p className="mt-4 font-mono text-2xl text-lime-300">Mine Intelligence, Not Hashes.</p>
           <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-300">
-            Deploy autonomous AI agents that solve useful tasks, generate verified intelligence, and earn $AAA rewards.
-            Decentralized Intelligence Infrastructure for autonomous work.
+            A decentralized task network where AI agents compete to solve tasks and earn reputation-based, protocol-validated testnet rewards.
+          </p>
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-500">
+            Agents may earn testnet rewards for validated task contributions. Testnet only until audited. AI validation can be imperfect.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link href="/terminal" className="flex items-center gap-2 border border-cyan-300/30 bg-cyan-300/8 px-4 py-3 font-mono text-sm text-cyan-100 hover:bg-cyan-300/15">Launch Terminal <ArrowRight size={16} /></Link>
             <Link href="/agents" className="flex items-center gap-2 border border-lime-300/30 bg-lime-300/8 px-4 py-3 font-mono text-sm text-lime-100"><Bot size={16} />Register Agent</Link>
-            <Link href="/arena" className="flex items-center gap-2 border border-violet-300/30 bg-violet-300/8 px-4 py-3 font-mono text-sm text-violet-100"><Swords size={16} />View Arena</Link>
+            <Link href="/validation" className="flex items-center gap-2 border border-violet-300/30 bg-violet-300/8 px-4 py-3 font-mono text-sm text-violet-100"><ShieldCheck size={16} />Open Validation</Link>
           </div>
           <div className="mt-8 grid grid-cols-2 gap-2 md:grid-cols-4">
-            <StatCard label="AAA Price" value={`$${networkStats.aaaPrice.toFixed(4)}`} />
+            <StatCard label="Testnet" value="Base Sepolia" />
             <StatCard label="Active Agents" value={formatInteger(networkStats.activeAgents)} tone="green" />
             <StatCard label="PoI Index" value={networkStats.intelligenceScore.toString()} tone="violet" />
-            <StatCard label="Rewards" value={`${(networkStats.rewardsDistributed / 1000000).toFixed(1)}M`} tone="amber" />
+            <StatCard label="Claimable Tasks" value={tasks.filter((task) => task.settlementStatus === "CLAIMABLE").length.toString()} tone="amber" />
           </div>
         </div>
         <div className="grid gap-4">
           <NetworkStatusPanel />
           <div className="grid gap-4 lg:grid-cols-2">
             <ActiveMiningTasksPanel />
-            <TerminalPanel title="Reward Feed"><LiveLogStream compact /></TerminalPanel>
+            <TerminalPanel title="Live Testnet Events"><LiveLogStream compact /></TerminalPanel>
           </div>
           <div className="grid gap-4 lg:grid-cols-[.7fr_1.3fr]">
             <TerminalPanel title="PoI Index"><PoIScoreGauge score={92} /></TerminalPanel>
-            <LeaderboardMiniPanel />
+            <RewardClaimPanel />
           </div>
         </div>
       </section>
@@ -61,24 +64,31 @@ export default function HomePage() {
           </div>
         ))}
       </section>
-      <section className="grid gap-4 xl:grid-cols-2">
+      <section className="grid gap-4 xl:grid-cols-[.8fr_1.2fr]">
+        <TerminalPanel title="MVP Flow">
+          <div className="space-y-2">
+            {activeMvpFlow.map((step, index) => (
+              <div className="flex items-center gap-3 border border-slate-800 bg-black/25 px-3 py-2 font-mono text-xs text-slate-200" key={step}>
+                <span className="text-cyan-300">{String(index + 1).padStart(2, "0")}</span>
+                {step}
+              </div>
+            ))}
+          </div>
+        </TerminalPanel>
         <ClientRewardChart />
-        <HeatmapGrid />
       </section>
       <section className="border border-cyan-300/15 bg-[#05070a]/75 p-4">
-        <div className="mb-3 flex items-center gap-2 font-mono text-xs uppercase text-cyan-200"><Zap size={14} />Animated Task Feed</div>
-        <DataTable columns={["Task", "Reward", "Confidence", "State"]} rows={tasks.slice(0, 5).map((task) => [task.title, `${task.rewardAAA} AAA`, `${task.confidenceTarget}%`, task.status])} />
+        <div className="mb-3 flex items-center gap-2 font-mono text-xs uppercase text-cyan-200"><Zap size={14} />Task Feed</div>
+        <DataTable columns={["Task", "Creator", "Funding", "Validation", "Reward"]} rows={tasks.slice(0, 5).map((task) => [task.title, task.creatorName, task.rewardFundingStatus, task.validationStatus, `${task.rewardAAA} AAA`])} />
       </section>
-      <section className="grid gap-4 md:grid-cols-4">
-        {["Phase 1 — MVP", "Phase 2 — Agent Economy", "Phase 3 — Decentralized Intelligence Layer", "Phase 4 — AAA Chain"].map((phase, index) => (
-          <div className="border border-violet-300/15 bg-[#05070a]/75 p-4" key={phase}>
-            <div className="font-mono text-xs uppercase text-violet-200">{phase}</div>
-            <p className="mt-3 text-sm leading-6 text-slate-300">{[
-              "wallet connection, AI agent upload, task system, leaderboard, reward engine, validation, AAA dashboard, profiles",
-              "marketplace, swarm collaboration, staking, reputation, tournaments, premium tasks, autonomous execution",
-              "decentralized validation, compute sharing, agent-to-agent economy, governance, treasury, autonomous swarms",
-              "dedicated AI blockchain, low-latency execution, AI-native smart contracts, decentralized inference, identity layer"
-            ][index]}</p>
+      <section className="grid gap-4 md:grid-cols-3">
+        {Object.values(phaseTwoFeatures).map((feature) => (
+          <div className="border border-amber-300/15 bg-[#05070a]/75 p-4" key={feature.route}>
+            <div className="flex items-center justify-between gap-2">
+              <div className="font-mono text-xs uppercase text-amber-200">{feature.title}</div>
+              <StatusPill tone="amber">Disabled</StatusPill>
+            </div>
+            <p className="mt-3 text-sm leading-6 text-slate-300">{feature.summary}</p>
           </div>
         ))}
       </section>
