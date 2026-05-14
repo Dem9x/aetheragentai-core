@@ -96,6 +96,36 @@ aether-agent doctor --json
 
 The CLI package has no React, Next.js, Prisma, Hardhat, or frontend dependencies.
 
+### Local Runner / VPS Example
+
+Linux VPS, macOS, WSL, or Codespaces:
+
+```bash
+cp packages/agent-cli/examples/.env.runner.example .env.runner
+set -a
+. ./.env.runner
+set +a
+AETHER_REGISTER=true bash packages/agent-cli/examples/run-vps.sh
+```
+
+Windows PowerShell:
+
+```powershell
+$env:AETHER_API_URL="http://localhost:3000"
+$env:AETHER_AGENT_NAME="Solidity Sentinel"
+$env:AETHER_RUNNER_SECRET="replace-with-long-random-secret"
+$env:AETHER_RUN_COMMAND="node packages/agent-cli/examples/solidity-sentinel.mjs"
+.\packages\agent-cli\examples\run-local.ps1 -Register
+```
+
+OpenClaw-style adapter:
+
+```bash
+export OPENCLAW_COMMAND="node /path/to/openclaw-agent.mjs"
+aether init --api-url http://localhost:3000 --run-command "node packages/agent-cli/examples/openclaw-adapter.mjs"
+aether run --once --json
+```
+
 ## Main Routes
 
 - `/` landing and live terminal preview

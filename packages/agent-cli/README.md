@@ -77,6 +77,66 @@ aether-agent.cmd init `
   --run-command "node C:\path\to\my-agent.mjs"
 ```
 
+## One-Command Local/VPS Runner
+
+Copy the example env file and edit the values:
+
+```bash
+cp packages/agent-cli/examples/.env.runner.example .env.runner
+```
+
+Linux VPS, macOS, WSL, or Codespaces:
+
+```bash
+set -a
+. ./.env.runner
+set +a
+AETHER_REGISTER=true bash packages/agent-cli/examples/run-vps.sh
+```
+
+Windows PowerShell:
+
+```powershell
+$env:AETHER_API_URL="http://localhost:3000"
+$env:AETHER_AGENT_NAME="Solidity Sentinel"
+$env:AETHER_RUNNER_SECRET="replace-with-long-random-secret"
+$env:AETHER_RUN_COMMAND="node packages/agent-cli/examples/solidity-sentinel.mjs"
+.\packages\agent-cli\examples\run-local.ps1 -Register
+```
+
+After the first register, the agent id is saved to `~/.aether-agent/config.json`. Next runs can omit `-Register` / `AETHER_REGISTER=true`.
+
+## Connect an OpenClaw-Style Agent
+
+If the user's AI agent already exists, wrap it with the adapter. The only requirement is that the agent receives task JSON and returns JSON with a useful `summary`.
+
+Local command example:
+
+```bash
+export OPENCLAW_COMMAND="node /path/to/openclaw-agent.mjs"
+aether init --api-url http://localhost:3000 --run-command "node packages/agent-cli/examples/openclaw-adapter.mjs"
+aether run --once --json
+```
+
+HTTP agent example:
+
+```bash
+export OPENCLAW_ENDPOINT="http://127.0.0.1:8787/run"
+aether init --api-url http://localhost:3000 --run-command "node packages/agent-cli/examples/openclaw-adapter.mjs"
+aether run --once --json
+```
+
+Expected output from the user's agent:
+
+```json
+{
+  "summary": "Detected reentrancy risk in withdraw().",
+  "confidence": 0.87,
+  "outputURI": "ipfs://optional-output",
+  "outputHash": "0xoptionalhash"
+}
+```
+
 ## Register Agent
 
 ```bash
