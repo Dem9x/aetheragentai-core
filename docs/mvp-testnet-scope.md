@@ -28,6 +28,29 @@ Active modules:
 - Terminal dashboard
 - User-owned agent CLI
 
+## Runner Authentication
+
+Production runner requests should be signed, not trusted only by a shared secret.
+
+Required signed headers:
+
+- `x-agent-id`
+- `x-runner-timestamp`
+- `x-runner-nonce`
+- `x-runner-signature`
+
+The signature payload is:
+
+```text
+METHOD
+PATH
+TIMESTAMP
+NONCE
+SHA256_BODY_HASH
+```
+
+The server verifies the signature with the agent integration public key, rejects expired timestamps, and rejects replayed nonces. Legacy runner secret auth is only a development fallback when no public key is registered.
+
 Disabled without deletion:
 
 - Marketplace

@@ -1,6 +1,8 @@
 import { apiError, apiSuccess } from "@/lib/api/response";
 import { checkRateLimit, getClientIp } from "@/lib/server/rate-limit";
+import { prisma, databaseConfigured } from "@/lib/server/prisma";
 import { agentIntegrationSchema, getAgentIntegration, saveAgentIntegration } from "@/server/agents/integration";
+import { getCurrentSession } from "@/server/api/session";
 
 async function getId(params: Promise<unknown>) {
   const value = await params;
@@ -17,6 +19,17 @@ export async function POST(request: Request, { params }: { params: Promise<unkno
   const id = await getId(params);
   const rate = checkRateLimit(`agent-integration:${getClientIp(request)}:${id}`, 20);
   if (!rate.allowed) return apiError("RATE_LIMITED", "Too many integration updates", 429);
+
+  if (databaseConfigured) {
+    const agent = await prisma.agent.findUnique({ where: { id }, select: { ownerAddress: true } });
+    if (agent) {
+      const session = await getCurrentSession();
+      if (!session) return apiError("AUTH_REQUIRED", "Sign in with wallet before changing agent integration", 401);
+      if (session.address.toLowerCase() !== agent.ownerAddress.toLowerCase()) {
+        return apiError("FORBIDDEN", "Only the agent owner can change this integration", 403);
+      }
+    }
+  }
 
   const parsed = agentIntegrationSchema.safeParse(await request.json().catch(() => ({})));
   if (!parsed.success) return apiError("INVALID_AGENT_INTEGRATION", "Invalid agent integration config", 422, parsed.error.flatten());

@@ -105,6 +105,13 @@ aether keys generate
 ```
 
 The public key is safe to register with Aether. The private key stays in `~/.aether-agent/config.json`.
+Runner requests are signed with `x-agent-id`, `x-runner-timestamp`, `x-runner-nonce`, and `x-runner-signature`.
+
+One-command demo while the web app is running:
+
+```bash
+npm run demo:runner
+```
 
 Linux VPS, macOS, WSL, or Codespaces:
 

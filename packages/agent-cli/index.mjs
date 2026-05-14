@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { spawn } from "node:child_process";
-import { createHash, generateKeyPairSync } from "node:crypto";
+import { createHash, createPrivateKey, generateKeyPairSync, randomUUID, sign } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
@@ -87,14 +87,17 @@ function fail(args, code, message, details) {
 
 async function request(config, path, options = {}) {
   const apiUrl = (options.apiUrl || config.apiUrl || process.env.AETHER_API_URL || "http://localhost:3000").replace(/\/$/, "");
+  const method = options.method ?? "GET";
+  const bodyText = options.body ? JSON.stringify(options.body) : "";
   const headers = {
     "content-type": "application/json",
+    ...runnerSignatureHeaders(config, method, path, bodyText),
     ...(options.headers ?? {})
   };
   const response = await fetch(`${apiUrl}${path}`, {
-    method: options.method ?? "GET",
+    method,
     headers,
-    body: options.body ? JSON.stringify(options.body) : undefined
+    body: bodyText || undefined
   });
   const payload = await response.json().catch(() => ({ ok: false, error: { message: `Non-JSON response ${response.status}` } }));
   if (!payload.ok) {
@@ -103,12 +106,29 @@ async function request(config, path, options = {}) {
   return payload.data;
 }
 
+function runnerSignatureHeaders(config, method, path, bodyText) {
+  if (!config.privateKey || !config.agentId) return {};
+  const timestamp = String(Date.now());
+  const nonce = randomUUID();
+  const bodyHash = sha256Hex(bodyText || "");
+  const payload = [method.toUpperCase(), path, timestamp, nonce, bodyHash].join("\n");
+  const signature = sign(null, Buffer.from(payload), createPrivateKey(config.privateKey)).toString("base64");
+  return {
+    "x-agent-id": config.agentId,
+    "x-runner-timestamp": timestamp,
+    "x-runner-nonce": nonce,
+    "x-runner-signature": signature
+  };
+}
+
 function help() {
   return `Aether Agent Runner ${VERSION}
 
 Usage:
   aether-agent init --api-url http://localhost:3000 --agent-id agent-orion --runner-secret secret --run-command "node my-agent.js"
+  aether-agent setup --api-url http://localhost:3000 --run-command "node my-agent.js"
   aether-agent doctor [--json]
+  aether-agent status [--json]
   aether-agent keys generate [--json]
   aether-agent login
   aether-agent register --name "Solidity Sentinel" --secret your-secret [--runtime LOCAL_RUNNER]
@@ -163,9 +183,11 @@ async function main() {
   }
 
   try {
-    if (command === "init") {
+    if (command === "init" || command === "setup") {
+      const generated = command === "setup" && !config.privateKey ? generateRunnerKeyPair() : null;
       const next = {
         ...config,
+        ...(generated ? { publicKey: generated.publicKey, privateKey: generated.privateKey, keyAlgorithm: KEY_ALGORITHM } : {}),
         apiUrl: args["api-url"] ?? config.apiUrl ?? "http://localhost:3000",
         agentId: args["agent-id"] ?? config.agentId,
         runnerSecret: args["runner-secret"] ?? config.runnerSecret,
@@ -174,13 +196,15 @@ async function main() {
       saveConfig(next);
       output(args, {
         ok: true,
-        message: `Saved config to ${CONFIG_PATH}`,
+        message: command === "setup"
+          ? `Saved config to ${CONFIG_PATH}${generated ? "\nGenerated runner signing keys." : ""}`
+          : `Saved config to ${CONFIG_PATH}`,
         data: { ...next, runnerSecret: mask(next.runnerSecret) }
       });
       return;
     }
 
-    if (command === "doctor") {
+    if (command === "doctor" || command === "status") {
       let health = null;
       let reachable = false;
       try {

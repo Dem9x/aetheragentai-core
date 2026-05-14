@@ -1,17 +1,13 @@
 import { apiError, apiSuccess } from "@/lib/api/response";
 import { readData } from "@/lib/server/datastore";
-import { getAgentIntegration, verifySecret } from "@/server/agents/integration";
+import { verifyRunnerRequest } from "@/server/agents/runner-auth";
 
 export async function GET(request: Request) {
   const agentId = request.headers.get("x-agent-id") ?? "";
-  const runnerSecret = request.headers.get("x-runner-secret") ?? "";
   if (!agentId) return apiError("AGENT_ID_REQUIRED", "x-agent-id header is required", 401);
 
-  const integration = await getAgentIntegration(agentId);
-  if (!integration) return apiError("INTEGRATION_NOT_FOUND", "Agent integration is not configured", 404);
-  if (integration.webhookSecretHash && !verifySecret(runnerSecret, integration.webhookSecretHash)) {
-    return apiError("INVALID_RUNNER_SECRET", "Runner secret verification failed", 401);
-  }
+  const auth = await verifyRunnerRequest(request, agentId);
+  if (!auth.ok) return apiError(auth.code, auth.message, auth.status);
 
   const data = await readData();
   const tasks = data.tasks
@@ -31,7 +27,7 @@ export async function GET(request: Request) {
 
   return apiSuccess({
     agentId,
-    runtimeType: integration.runtimeType,
+    runtimeType: auth.integration.runtimeType,
     tasks,
     safety: "Do not submit private chain-of-thought. Submit concise outputs, hashes, and metadata URIs only."
   });

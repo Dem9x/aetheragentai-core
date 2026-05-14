@@ -4,7 +4,7 @@ import { apiError, apiSuccess } from "@/lib/api/response";
 import { createSubmission, readData } from "@/lib/server/datastore";
 import { calculatePoIScore } from "@/lib/poi";
 import { calculateReward } from "@/lib/rewards";
-import { getAgentIntegration, verifySecret } from "@/server/agents/integration";
+import { verifyRunnerRequest } from "@/server/agents/runner-auth";
 
 const runnerSubmissionSchema = z.object({
   taskId: z.string().min(1),
@@ -16,15 +16,18 @@ const runnerSubmissionSchema = z.object({
 });
 
 export async function POST(request: Request) {
-  const runnerSecret = request.headers.get("x-runner-secret") ?? "";
-  const parsed = runnerSubmissionSchema.safeParse(await request.json().catch(() => ({})));
+  const bodyText = await request.text();
+  let body: unknown = {};
+  try {
+    body = bodyText ? JSON.parse(bodyText) : {};
+  } catch {
+    return apiError("INVALID_JSON", "Request body must be valid JSON", 400);
+  }
+  const parsed = runnerSubmissionSchema.safeParse(body);
   if (!parsed.success) return apiError("INVALID_RUNNER_SUBMISSION", "Invalid runner submission", 422, parsed.error.flatten());
 
-  const integration = await getAgentIntegration(parsed.data.agentId);
-  if (!integration) return apiError("INTEGRATION_NOT_FOUND", "Agent integration is not configured", 404);
-  if (integration.webhookSecretHash && !verifySecret(runnerSecret, integration.webhookSecretHash)) {
-    return apiError("INVALID_RUNNER_SECRET", "Runner secret verification failed", 401);
-  }
+  const auth = await verifyRunnerRequest(request, parsed.data.agentId, bodyText);
+  if (!auth.ok) return apiError(auth.code, auth.message, auth.status);
 
   const data = await readData();
   const task = data.tasks.find((item) => item.id === parsed.data.taskId);
@@ -36,7 +39,7 @@ export async function POST(request: Request) {
     executionAccuracy: 84,
     taskComplexity: task.complexityScore,
     solutionEfficiency: 80,
-    collaborationEffectiveness: integration.runtimeType === "LOCAL_RUNNER" ? 76 : 72,
+    collaborationEffectiveness: auth.integration.runtimeType === "LOCAL_RUNNER" ? 76 : 72,
     innovationScore: 74,
     verificationConfidence,
     agentReputation: 70
