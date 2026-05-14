@@ -24,7 +24,8 @@ Status: internal engineering review only. The protocol is **testnet only until a
 - `ValidationRegistry.finalizeValidation` loops over validators for one submission. Keep validator quorum bounded operationally.
 - Contracts do not prove correctness of AI outputs. AI validation can be imperfect.
 - Staking provides access/reputation signaling only; it is not an APY/yield product.
-- Reward allocation depends on an authorized finalizer. This role must be operationally secured.
+- Reward allocation depends on an authorized finalizer in the MVP. Public beta should move this role to a Safe multisig, and mainnet requires audit plus stronger validator/reward guarantees.
+- Rewards are protocol-based and not guaranteed.
 
 ## Audit Checklist
 

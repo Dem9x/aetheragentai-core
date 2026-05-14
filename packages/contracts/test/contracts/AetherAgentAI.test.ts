@@ -70,6 +70,51 @@ describe("AetherAgentAI protocol contracts", function () {
     await expect(validationRegistry.connect(admin).setMinimumQuorum(0)).to.be.revertedWithCustomError(validationRegistry, "InvalidQuorum");
   });
 
+  it("defaults minimumQuorum to 3 and computes averages at quorum", async function () {
+    const { validator, validatorTwo, validatorThree, validationRegistry } = await deployFixture();
+    const role = await validationRegistry.VALIDATOR_ROLE();
+    await validationRegistry.grantRole(role, validator.address);
+    await validationRegistry.grantRole(role, validatorTwo.address);
+    await validationRegistry.grantRole(role, validatorThree.address);
+
+    expect(await validationRegistry.minimumQuorum()).to.equal(3);
+    await validationRegistry.connect(validator).submitValidation(9, 77, 9000, 9300, "ipfs://1");
+    await validationRegistry.connect(validatorTwo).submitValidation(9, 77, 8000, 8700, "ipfs://2");
+    await validationRegistry.connect(validatorThree).submitValidation(9, 77, 7000, 8400, "ipfs://3");
+
+    await expect(validationRegistry.finalizeValidation(77))
+      .to.emit(validationRegistry, "ValidationFinalized")
+      .withArgs(9, 77, 8000, 8800, 3);
+    const result = await validationRegistry.finalizedResults(77);
+    expect(result.averageScore).to.equal(8000);
+    expect(result.averageConfidence).to.equal(8800);
+    expect(result.validatorCount).to.equal(3);
+  });
+
+  it("allows admin to update quorum and rejects invalid/non-admin updates", async function () {
+    const { user, validationRegistry } = await deployFixture();
+    await expect(validationRegistry.setMinimumQuorum(2))
+      .to.emit(validationRegistry, "MinimumQuorumUpdated")
+      .withArgs(3, 2);
+    expect(await validationRegistry.minimumQuorum()).to.equal(2);
+    await expect(validationRegistry.setMinimumQuorum(0)).to.be.revertedWithCustomError(validationRegistry, "InvalidQuorum");
+    await expect(validationRegistry.setMinimumQuorum(26)).to.be.revertedWithCustomError(validationRegistry, "InvalidQuorum");
+    await expect(validationRegistry.connect(user).setMinimumQuorum(4)).to.be.reverted;
+  });
+
+  it("rejects duplicate validators and double finalization", async function () {
+    const { validator, validatorTwo, validationRegistry } = await deployFixture();
+    const role = await validationRegistry.VALIDATOR_ROLE();
+    await validationRegistry.setMinimumQuorum(2);
+    await validationRegistry.grantRole(role, validator.address);
+    await validationRegistry.grantRole(role, validatorTwo.address);
+    await validationRegistry.connect(validator).submitValidation(1, 88, 9000, 9000, "ipfs://1");
+    await expect(validationRegistry.connect(validator).submitValidation(1, 88, 9100, 9100, "ipfs://dup")).to.be.revertedWithCustomError(validationRegistry, "DuplicateValidation");
+    await validationRegistry.connect(validatorTwo).submitValidation(1, 88, 9200, 9200, "ipfs://2");
+    await validationRegistry.finalizeValidation(88);
+    await expect(validationRegistry.finalizeValidation(88)).to.be.revertedWithCustomError(validationRegistry, "AlreadyFinalized");
+  });
+
   it("allocates and claims rewards through pull pattern", async function () {
     const { token, treasury, user, recipient, rewardDistributor } = await deployFixture();
     const amount = ethers.parseUnits("500", 18);
@@ -79,6 +124,25 @@ describe("AetherAgentAI protocol contracts", function () {
     await expect(rewardDistributor.allocateReward(1, 1, recipient.address, amount)).to.emit(rewardDistributor, "RewardAllocated");
     await expect(rewardDistributor.connect(recipient).claim()).to.emit(rewardDistributor, "RewardClaimed");
     expect(await token.balanceOf(recipient.address)).to.equal(amount);
+  });
+
+  it("enforces reward finalizer role, duplicate allocation, no-reward claim, and pause", async function () {
+    const { token, treasury, user, recipient, rewardDistributor } = await deployFixture();
+    const amount = ethers.parseUnits("250", 18);
+    await token.connect(treasury).transfer(user.address, amount);
+    await token.connect(user).approve(await rewardDistributor.getAddress(), amount);
+    await rewardDistributor.connect(user).fundRewardPool(amount);
+
+    await expect(rewardDistributor.connect(user).allocateReward(1, 11, recipient.address, amount)).to.be.reverted;
+    await expect(rewardDistributor.connect(recipient).claim()).to.be.revertedWithCustomError(rewardDistributor, "NoReward");
+    await rewardDistributor.allocateReward(1, 11, recipient.address, amount);
+    await expect(rewardDistributor.allocateReward(1, 11, recipient.address, amount)).to.be.revertedWithCustomError(rewardDistributor, "AlreadyAllocated");
+
+    await rewardDistributor.pause();
+    await expect(rewardDistributor.allocateReward(1, 12, recipient.address, 1)).to.be.revertedWithCustomError(rewardDistributor, "EnforcedPause");
+    await expect(rewardDistributor.connect(recipient).claim()).to.be.revertedWithCustomError(rewardDistributor, "EnforcedPause");
+    await rewardDistributor.unpause();
+    await expect(rewardDistributor.connect(recipient).claim()).to.emit(rewardDistributor, "RewardClaimed").withArgs(recipient.address, amount);
   });
 
   it("enforces staking lock period and supports fuzz-like amounts", async function () {

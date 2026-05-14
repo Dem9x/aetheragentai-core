@@ -1,8 +1,9 @@
 import { apiError, apiSuccess } from "@/lib/api/response";
-import { checkRateLimit, getClientIp } from "@/lib/server/rate-limit";
+import { getClientIp, rateLimit } from "@/lib/server/rate-limit";
 import { prisma, databaseConfigured } from "@/lib/server/prisma";
 import { agentIntegrationSchema, getAgentIntegration, saveAgentIntegration } from "@/server/agents/integration";
 import { getCurrentSession } from "@/server/api/session";
+import { requireAdminSession } from "@/server/api/admin";
 
 async function getId(params: Promise<unknown>) {
   const value = await params;
@@ -11,25 +12,19 @@ async function getId(params: Promise<unknown>) {
 
 export async function GET(_: Request, { params }: { params: Promise<unknown> }) {
   const id = await getId(params);
+  const auth = await authorizeAgentOwner(id);
+  if (!auth.ok) return apiError(auth.code, auth.message, auth.status);
   const integration = await getAgentIntegration(id);
   return apiSuccess({ integration });
 }
 
 export async function POST(request: Request, { params }: { params: Promise<unknown> }) {
   const id = await getId(params);
-  const rate = checkRateLimit(`agent-integration:${getClientIp(request)}:${id}`, 20);
-  if (!rate.allowed) return apiError("RATE_LIMITED", "Too many integration updates", 429);
+  const rate = rateLimit.check(`agent-integration:${getClientIp(request)}:${id}`, { limit: 20, windowMs: 60_000, critical: true });
+  if (!rate.allowed) return apiError(rate.code ?? "RATE_LIMITED", rate.message ?? "Too many integration updates", rate.code ? 503 : 429);
 
-  if (databaseConfigured) {
-    const agent = await prisma.agent.findUnique({ where: { id }, select: { ownerAddress: true } });
-    if (agent) {
-      const session = await getCurrentSession();
-      if (!session) return apiError("AUTH_REQUIRED", "Sign in with wallet before changing agent integration", 401);
-      if (session.address.toLowerCase() !== agent.ownerAddress.toLowerCase()) {
-        return apiError("FORBIDDEN", "Only the agent owner can change this integration", 403);
-      }
-    }
-  }
+  const auth = await authorizeAgentOwner(id);
+  if (!auth.ok) return apiError(auth.code, auth.message, auth.status);
 
   const parsed = agentIntegrationSchema.safeParse(await request.json().catch(() => ({})));
   if (!parsed.success) return apiError("INVALID_AGENT_INTEGRATION", "Invalid agent integration config", 422, parsed.error.flatten());
@@ -43,4 +38,21 @@ export async function POST(request: Request, { params }: { params: Promise<unkno
     integration,
     note: "Agent remains user-owned. Aether routes tasks, validates outputs, and records protocol rewards."
   });
+}
+
+async function authorizeAgentOwner(agentId: string) {
+  if (process.env.AETHER_DEV_AUTH_BYPASS === "true" && process.env.NODE_ENV !== "production") {
+    return { ok: true as const };
+  }
+  if (!databaseConfigured) {
+    return { ok: false as const, status: 503, code: "DATABASE_REQUIRED", message: "Agent ownership checks require DATABASE_URL." };
+  }
+  const agent = await prisma.agent.findUnique({ where: { id: agentId }, select: { ownerAddress: true } });
+  if (!agent) return { ok: false as const, status: 404, code: "AGENT_NOT_FOUND", message: "Agent not found" };
+  const session = await getCurrentSession();
+  if (!session) return { ok: false as const, status: 401, code: "AUTH_REQUIRED", message: "Sign in with wallet before accessing agent integration" };
+  if (session.address.toLowerCase() === agent.ownerAddress.toLowerCase()) return { ok: true as const };
+  const admin = await requireAdminSession();
+  if (admin.ok) return { ok: true as const };
+  return { ok: false as const, status: 403, code: "FORBIDDEN", message: "Only the agent owner can access this integration" };
 }

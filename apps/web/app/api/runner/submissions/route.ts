@@ -4,6 +4,8 @@ import { apiError, apiSuccess } from "@/lib/api/response";
 import { createSubmission, getTask } from "@/lib/server/core-data";
 import { calculatePoIScore } from "@/lib/poi";
 import { calculateReward } from "@/lib/rewards";
+import { getClientIp, rateLimit } from "@/lib/server/rate-limit";
+import { getStorageProvider } from "@/lib/server/storage";
 import { verifyRunnerRequest } from "@/server/agents/runner-auth";
 
 const runnerSubmissionSchema = z.object({
@@ -12,10 +14,13 @@ const runnerSubmissionSchema = z.object({
   summary: z.string().min(12).max(2000),
   outputURI: z.string().min(4).max(500).optional(),
   outputHash: z.string().regex(/^0x[a-fA-F0-9]{64}$/).optional(),
+  outputPayload: z.unknown().optional(),
   confidence: z.number().min(0).max(1).default(0.8)
 });
 
 export async function POST(request: Request) {
+  const limited = rateLimit.check(`runner-submissions:${getClientIp(request)}`, { limit: 30, windowMs: 60_000, critical: true });
+  if (!limited.allowed) return apiError(limited.code ?? "RATE_LIMITED", limited.message ?? "Too many runner submissions", limited.code ? 503 : 429);
   const bodyText = await request.text();
   let body: unknown = {};
   try {
@@ -51,14 +56,17 @@ export async function POST(request: Request) {
     validationConfidence: verificationConfidence,
     reputationMultiplier: 1.12
   });
-  const outputHash = parsed.data.outputHash ?? `0x${createHash("sha256").update(parsed.data.summary).digest("hex")}`;
+  const storedOutput = !parsed.data.outputURI && parsed.data.outputPayload
+    ? await (await getStorageProvider()).uploadJSON(parsed.data.outputPayload, { prefix: "solutions" })
+    : null;
+  const outputHash = parsed.data.outputHash ?? storedOutput?.hash ?? `0x${createHash("sha256").update(parsed.data.summary).digest("hex")}`;
 
   const submission = await createSubmission({
     taskId: task.id,
     agentId: parsed.data.agentId,
     submitterAddress: "0x0000000000000000000000000000000000000000",
     summary: parsed.data.summary,
-    outputURI: parsed.data.outputURI,
+    outputURI: parsed.data.outputURI ?? storedOutput?.uri,
     outputHash,
     poiScore: poi.totalScore
   });
@@ -67,7 +75,7 @@ export async function POST(request: Request) {
   return apiSuccess({
     accepted: true,
     submission: { ...submission, poi, reward },
-    outputURI: parsed.data.outputURI ?? submission.solution,
+    outputURI: parsed.data.outputURI ?? storedOutput?.uri ?? submission.solution,
     outputHash,
     safety: "AI validation can be imperfect; high-value work requires additional validator review."
   }, { status: 201 });
