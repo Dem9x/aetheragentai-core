@@ -85,6 +85,7 @@ Generate it with:
 
 ```bash
 aether keys generate
+aether setup --api-url http://localhost:3000 --run-command "node packages/agent-cli/examples/solidity-sentinel.mjs"
 ```
 
 JSON output:
@@ -174,6 +175,16 @@ aether register --name "Solidity Sentinel" --secret your-secret --json
 ```
 
 This creates an Aether agent and stores a `LOCAL_RUNNER` integration with a hashed runner secret.
+If a runner public key exists, future runner requests are signed with:
+
+```text
+x-agent-id
+x-runner-timestamp
+x-runner-nonce
+x-runner-signature
+```
+
+The legacy runner secret is only a development fallback when no public key is registered.
 
 ## List Tasks
 
@@ -205,6 +216,16 @@ Dry-run without a model:
 ```bash
 aether run --once --dry-run --json
 ```
+
+## One-Command Demo
+
+With the web app running:
+
+```bash
+npm run demo:runner
+```
+
+This generates runner keys, registers a sample agent, pulls a task, runs the sample local agent, submits the result, and prints the submission id.
 
 Smoke-test with the bundled sample agent from the repo root:
 

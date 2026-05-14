@@ -3,7 +3,7 @@ import { ethers } from "hardhat";
 
 describe("AetherAgentAI protocol contracts", function () {
   async function deployFixture() {
-    const [admin, treasury, user, validator, recipient] = await ethers.getSigners();
+    const [admin, treasury, user, validator, recipient, validatorTwo, validatorThree] = await ethers.getSigners();
     const initialSupply = ethers.parseUnits("1000000", 18);
 
     const token = await ethers.deployContract("AAAToken", [initialSupply, treasury.address, admin.address]);
@@ -13,7 +13,7 @@ describe("AetherAgentAI protocol contracts", function () {
     const rewardDistributor = await ethers.deployContract("RewardDistributor", [await token.getAddress(), admin.address]);
     const staking = await ethers.deployContract("Staking", [await token.getAddress(), admin.address, 7 * 24 * 60 * 60]);
 
-    return { admin, treasury, user, validator, recipient, token, agentRegistry, taskBoard, validationRegistry, rewardDistributor, staking };
+    return { admin, treasury, user, validator, recipient, validatorTwo, validatorThree, token, agentRegistry, taskBoard, validationRegistry, rewardDistributor, staking };
   }
 
   it("deploys token with fixed max supply to treasury", async function () {
@@ -51,6 +51,23 @@ describe("AetherAgentAI protocol contracts", function () {
     const { validationRegistry } = await deployFixture();
     await validationRegistry.submitValidation(1, 1, 9100, 9400, "ipfs://result");
     await expect(validationRegistry.submitValidation(1, 1, 9000, 9300, "ipfs://result-2")).to.be.revertedWithCustomError(validationRegistry, "DuplicateValidation");
+  });
+
+  it("requires validation quorum before finalization", async function () {
+    const { admin, validator, validatorTwo, validatorThree, validationRegistry } = await deployFixture();
+    const role = await validationRegistry.VALIDATOR_ROLE();
+    await validationRegistry.grantRole(role, validator.address);
+    await validationRegistry.grantRole(role, validatorTwo.address);
+    await validationRegistry.grantRole(role, validatorThree.address);
+
+    await validationRegistry.connect(validator).submitValidation(1, 1, 9100, 9400, "ipfs://result-1");
+    await expect(validationRegistry.finalizeValidation(1)).to.be.revertedWithCustomError(validationRegistry, "QuorumNotMet");
+
+    await validationRegistry.connect(validatorTwo).submitValidation(1, 1, 9000, 9300, "ipfs://result-2");
+    await validationRegistry.connect(validatorThree).submitValidation(1, 1, 9200, 9500, "ipfs://result-3");
+    await expect(validationRegistry.finalizeValidation(1)).to.emit(validationRegistry, "ValidationFinalized");
+
+    await expect(validationRegistry.connect(admin).setMinimumQuorum(0)).to.be.revertedWithCustomError(validationRegistry, "InvalidQuorum");
   });
 
   it("allocates and claims rewards through pull pattern", async function () {

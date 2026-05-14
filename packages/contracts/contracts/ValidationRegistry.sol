@@ -31,13 +31,17 @@ contract ValidationRegistry is AccessControl, Pausable {
     mapping(uint256 => ValidationResult[]) private resultsBySubmission;
     mapping(uint256 => mapping(address => bool)) public hasValidated;
     mapping(uint256 => AggregateResult) public finalizedResults;
+    uint256 public minimumQuorum = 3;
 
     event ValidationSubmitted(uint256 indexed taskId, uint256 indexed submissionId, address indexed validator, uint256 score, uint256 confidence, string resultURI);
     event ValidationFinalized(uint256 indexed taskId, uint256 indexed submissionId, uint256 averageScore, uint256 averageConfidence, uint256 validatorCount);
+    event MinimumQuorumUpdated(uint256 minimumQuorum);
 
     error InvalidScore();
     error DuplicateValidation();
     error NoValidations();
+    error QuorumNotMet();
+    error InvalidQuorum();
     error AlreadyFinalized();
 
     constructor(address admin) {
@@ -67,6 +71,7 @@ contract ValidationRegistry is AccessControl, Pausable {
         if (finalizedResults[submissionId].finalized) revert AlreadyFinalized();
         ValidationResult[] storage results = resultsBySubmission[submissionId];
         if (results.length == 0) revert NoValidations();
+        if (results.length < minimumQuorum) revert QuorumNotMet();
 
         uint256 scoreSum;
         uint256 confidenceSum;
@@ -89,6 +94,12 @@ contract ValidationRegistry is AccessControl, Pausable {
 
     function getValidationCount(uint256 submissionId) external view returns (uint256) {
         return resultsBySubmission[submissionId].length;
+    }
+
+    function setMinimumQuorum(uint256 newQuorum) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        if (newQuorum == 0 || newQuorum > 25) revert InvalidQuorum();
+        minimumQuorum = newQuorum;
+        emit MinimumQuorumUpdated(newQuorum);
     }
 
     function pause() external onlyRole(PAUSER_ROLE) {

@@ -19,6 +19,12 @@ import {
 const dataDirectory = path.join(process.cwd(), "data");
 const dataFile = path.join(dataDirectory, "aetheragentai.json");
 
+function assertLocalDatastoreAllowed() {
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("Local JSON datastore is disabled in production. Configure DATABASE_URL and use Prisma-backed persistence.");
+  }
+}
+
 function seedData(): AppData {
   return {
     agents,
@@ -72,6 +78,7 @@ function normalizeData(data: AppData): AppData {
 }
 
 async function ensureDataFile() {
+  assertLocalDatastoreAllowed();
   await mkdir(dataDirectory, { recursive: true });
 
   try {
@@ -82,12 +89,14 @@ async function ensureDataFile() {
 }
 
 export async function readData(): Promise<AppData> {
+  assertLocalDatastoreAllowed();
   await ensureDataFile();
   const raw = await readFile(dataFile, "utf8");
   return normalizeData({ ...seedData(), ...JSON.parse(raw) } as AppData);
 }
 
 export async function writeData(data: AppData) {
+  assertLocalDatastoreAllowed();
   await mkdir(dataDirectory, { recursive: true });
   await writeFile(dataFile, JSON.stringify(data, null, 2), "utf8");
 }

@@ -25,7 +25,8 @@
     "cli:link": "npm link -w @aetheragentai/agent-cli",
     "cli:doctor": "node packages/agent-cli/index.mjs doctor --json",
     "cli:help": "node packages/agent-cli/index.mjs --help",
-    "cli:test": "npm test -w @aetheragentai/agent-cli"
+    "cli:test": "npm test -w @aetheragentai/agent-cli",
+    "demo:runner": "node packages/agent-cli/examples/demo-runner.mjs"
   },
   "engines": {
     "node": ">=20"
