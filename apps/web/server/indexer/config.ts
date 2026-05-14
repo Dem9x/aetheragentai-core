@@ -20,6 +20,8 @@ export function getIndexerConfig() {
     rpcUrl: process.env.EVM_RPC_URL || process.env.BASE_SEPOLIA_RPC_URL || "",
     confirmations: Number(process.env.INDEXER_CONFIRMATIONS ?? 8),
     fromBlock: BigInt(process.env.INDEXER_FROM_BLOCK ?? 0),
+    maxBlockRange: BigInt(process.env.INDEXER_MAX_BLOCK_RANGE ?? 10),
+    maxChunksPerRun: Number(process.env.INDEXER_MAX_CHUNKS_PER_RUN ?? 25),
     contracts: {
       agentRegistry: process.env.NEXT_PUBLIC_AGENT_REGISTRY_ADDRESS,
       taskBoard: process.env.NEXT_PUBLIC_TASK_BOARD_ADDRESS,

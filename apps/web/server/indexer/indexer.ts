@@ -44,47 +44,62 @@ export async function runIndexerOnce() {
   }
 
   let indexed = 0;
-  for (const event of indexedEvents) {
-    const logs = await client.getLogs({
-      address: addresses,
-      event,
-      fromBlock,
-      toBlock: safeToBlock
-    });
+  const maxRange = config.maxBlockRange > BigInt(0) ? config.maxBlockRange : BigInt(10);
+  const maxChunks = Math.max(1, config.maxChunksPerRun);
+  const cappedToBlock = minBlock(safeToBlock, fromBlock + maxRange * BigInt(maxChunks) - BigInt(1));
+  let chunkFromBlock = fromBlock;
+  let chunks = 0;
 
-    for (const log of logs) {
-      await prisma.indexedEvent.upsert({
-        where: {
-          chainId_txHash_logIndex: {
-            chainId: config.chain.id,
-            txHash: log.transactionHash!,
-            logIndex: log.logIndex!
-          }
-        },
-        create: {
-          chainId: config.chain.id,
-          contractAddress: log.address.toLowerCase(),
-          eventName: event.name,
-          txHash: log.transactionHash!,
-          logIndex: Number(log.logIndex),
-          blockNumber: log.blockNumber!,
-          blockHash: log.blockHash!,
-          confirmed: true,
-          payload: serializeLog(log)
-        },
-        update: {
-          confirmed: true,
-          payload: serializeLog(log)
-        }
+  while (chunkFromBlock <= cappedToBlock && chunks < maxChunks) {
+    const chunkToBlock = minBlock(cappedToBlock, chunkFromBlock + maxRange - BigInt(1));
+    for (const event of indexedEvents) {
+      const logs = await client.getLogs({
+        address: addresses,
+        event,
+        fromBlock: chunkFromBlock,
+        toBlock: chunkToBlock
       });
-      indexed += 1;
+
+      for (const log of logs) {
+        await prisma.indexedEvent.upsert({
+          where: {
+            chainId_txHash_logIndex: {
+              chainId: config.chain.id,
+              txHash: log.transactionHash!,
+              logIndex: log.logIndex!
+            }
+          },
+          create: {
+            chainId: config.chain.id,
+            contractAddress: log.address.toLowerCase(),
+            eventName: event.name,
+            txHash: log.transactionHash!,
+            logIndex: Number(log.logIndex),
+            blockNumber: log.blockNumber!,
+            blockHash: log.blockHash!,
+            confirmed: true,
+            payload: serializeLog(log)
+          },
+          update: {
+            confirmed: true,
+            payload: serializeLog(log)
+          }
+        });
+        indexed += 1;
+      }
     }
+    chunks += 1;
+    chunkFromBlock = chunkToBlock + BigInt(1);
   }
 
   await prisma.indexerState.update({
     where: { id: stateId },
-    data: { lastProcessedBlock: safeToBlock }
+    data: { lastProcessedBlock: cappedToBlock }
   });
 
-  return { indexed, fromBlock, toBlock: safeToBlock };
+  return { indexed, fromBlock, toBlock: cappedToBlock, safeToBlock, chunks, completed: cappedToBlock >= safeToBlock };
+}
+
+function minBlock(a: bigint, b: bigint) {
+  return a < b ? a : b;
 }
