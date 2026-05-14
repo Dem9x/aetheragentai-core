@@ -42,6 +42,14 @@ export AAA_TREASURY_ADDRESS="0xyour_treasury_or_multisig_address"
 
 Use a fresh funded Base Sepolia test wallet. Do not use mainnet funds before audit.
 
+The deploy script also reads the root `.env` as a fallback, but `packages/contracts/.env` is the clearest place for contract deployment secrets.
+
+Quick check without printing secrets:
+
+```bash
+node -e "require('dotenv').config({path:'packages/contracts/.env'}); console.log({rpc:Boolean(process.env.BASE_SEPOLIA_RPC_URL), deployer:Boolean(process.env.DEPLOYER_PRIVATE_KEY)})"
+```
+
 ## 2. Run Local Services
 
 ```bash

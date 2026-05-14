@@ -5,6 +5,7 @@ import type { HardhatUserConfig } from "hardhat/config";
 import { resolve } from "node:path";
 
 loadEnv({ path: resolve(__dirname, ".env") });
+loadEnv({ path: resolve(__dirname, "../../.env") });
 loadEnv();
 
 const PRIVATE_KEY = process.env.DEPLOYER_PRIVATE_KEY;
