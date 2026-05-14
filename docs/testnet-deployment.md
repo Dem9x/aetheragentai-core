@@ -72,6 +72,34 @@ Copy deployed addresses into:
 - `NEXT_PUBLIC_REWARD_DISTRIBUTOR_ADDRESS`
 - `NEXT_PUBLIC_STAKING_ADDRESS`
 
+The deploy command prints JSON like:
+
+```json
+{
+  "contracts": {
+    "AAAToken": "0x...",
+    "AgentRegistry": "0x...",
+    "TaskBoard": "0x...",
+    "ValidationRegistry": "0x...",
+    "RewardDistributor": "0x...",
+    "Staking": "0x..."
+  }
+}
+```
+
+Map it into the web `.env` like this:
+
+```env
+NEXT_PUBLIC_AAA_TOKEN_ADDRESS=0xAAATokenAddress
+NEXT_PUBLIC_AGENT_REGISTRY_ADDRESS=0xAgentRegistryAddress
+NEXT_PUBLIC_TASK_BOARD_ADDRESS=0xTaskBoardAddress
+NEXT_PUBLIC_VALIDATION_REGISTRY_ADDRESS=0xValidationRegistryAddress
+NEXT_PUBLIC_REWARD_DISTRIBUTOR_ADDRESS=0xRewardDistributorAddress
+NEXT_PUBLIC_STAKING_ADDRESS=0xStakingAddress
+```
+
+Restart the web server after editing `.env`, because Next.js reads these values at startup.
+
 ## 5. Index Events
 
 Set:
@@ -79,6 +107,8 @@ Set:
 - `EVM_RPC_URL`
 - `INDEXER_ADMIN_TOKEN`
 - `INDEXER_FROM_BLOCK`
+
+`EVM_RPC_URL` can use the same value as `BASE_SEPOLIA_RPC_URL`.
 
 Then call:
 
