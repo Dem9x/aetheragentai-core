@@ -1,41 +1,216 @@
-node_modules
-**/node_modules
+# =========================================================
+# AetherAgentAI Core .gitignore
+# Monorepo: Next.js + Agent CLI + Solidity/Hardhat + AI runner
+# =========================================================
 
-.next
-**/.next
+# -----------------------------
+# Dependencies
+# -----------------------------
+node_modules/
+**/node_modules/
 
-dist
-build
-coverage
-
-.git
-.gitignore
-
+# -----------------------------
+# Environment files
+# Never commit secrets, private keys, API keys, RPC keys, or DB URLs
+# -----------------------------
 .env
 .env.*
+*.env
+*.local
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 
+# Keep safe templates
+!.env.example
+!.env.*.example
+!**/.env.example
+!**/.env.*.example
+
+# -----------------------------
+# Next.js / React / frontend build
+# -----------------------------
+.next/
+**/.next/
+out/
+**/out/
+dist/
+**/dist/
+build/
+**/build/
+.turbo/
+**/.turbo/
+
+# -----------------------------
+# TypeScript / cache
+# -----------------------------
+*.tsbuildinfo
+**/*.tsbuildinfo
+.cache/
+**/.cache/
+tmp/
+temp/
+**/tmp/
+**/temp/
+
+# -----------------------------
+# Logs
+# -----------------------------
+logs/
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
 
-models
-checkpoints
-weights
+# -----------------------------
+# Test / coverage
+# -----------------------------
+coverage/
+**/coverage/
+.nyc_output/
+**/.nyc_output/
 
+# -----------------------------
+# Database / Prisma local files
+# -----------------------------
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+prisma/dev.db
+**/prisma/dev.db
+apps/web/prisma/migrations/*/migration_lock.toml
+
+# Usually keep migrations, but do not commit local migration lock noise if unwanted.
+# If your team wants migration_lock.toml committed, remove the line above.
+
+# -----------------------------
+# Local app data / Aether runtime files
+# -----------------------------
+data/
+apps/web/data/
+uploads/
+**/uploads/
+.aether/
+.aether-agent/
+**/.aether/
+**/.aether-agent/
+
+# Local runner outputs
+outputs/
+**/outputs/
+runner-outputs/
+**/runner-outputs/
+
+# -----------------------------
+# AI model files / checkpoints
+# -----------------------------
+models/
+checkpoints/
+weights/
 *.bin
 *.pt
 *.pth
 *.onnx
 *.safetensors
+*.gguf
+*.ckpt
 
-tmp
-temp
-cache
-.cache
+# -----------------------------
+# Solidity / Hardhat / Foundry
+# -----------------------------
+artifacts/
+**/artifacts/
+cache/
+**/cache/
+typechain/
+typechain-types/
+**/typechain/
+**/typechain-types/
 
-uploads
+broadcast/
+**/broadcast/
+out/
+**/out/
 
-.vscode
-.idea
+# Foundry
+lib/
+**/lib/
+forge-cache/
+**/forge-cache/
 
-# optional
+# Keep Solidity source and scripts
+!packages/contracts/contracts/
+!packages/contracts/scripts/
+!packages/contracts/test/
+
+# -----------------------------
+# Package manager files
+# -----------------------------
+.pnpm-store/
+.yarn/
+!.yarn/releases
+!.yarn/plugins
+!.yarn/sdks
+!.yarn/versions
+
+# -----------------------------
+# OS files
+# -----------------------------
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# -----------------------------
+# Editor / IDE
+# -----------------------------
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Optional: allow shared VS Code recommendations if you want
+!.vscode/extensions.json
+!.vscode/settings.example.json
+
+# -----------------------------
+# Docker local overrides
+# -----------------------------
 Dockerfile.dev
 docker-compose.override.yml
+docker-compose.local.yml
+
+# -----------------------------
+# Keys / wallets / certificates
+# -----------------------------
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+*.keystore
+wallet.json
+wallets/
+keys/
+secrets/
+**/wallet.json
+**/wallets/
+**/keys/
+**/secrets/
+
+# -----------------------------
+# OpenClaw / local agent runtime
+# -----------------------------
+.openclaw/
+**/.openclaw/
+openclaw.json
+openclaw.json.bak
+
+# -----------------------------
+# Misc
+# -----------------------------
+.vercel/
+.netlify/
