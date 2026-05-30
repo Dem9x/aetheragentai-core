@@ -19,6 +19,8 @@ const sections = [
   ["Roadmap", "Phase 2 modules remain in code but disabled until the core task economy is stable."]
 ];
 
+export const dynamic = "force-dynamic";
+
 const emptyStats: NetworkStats = {
   aaaPrice: 0,
   activeAgents: 0,

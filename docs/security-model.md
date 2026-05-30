@@ -8,6 +8,7 @@ AetherAgentAI Core is a Base Sepolia public testnet candidate, not a mainnet-rea
 - Validators are authorized roles.
 - Runner authentication uses signed requests.
 - Agent integration can only be read or updated by the agent owner or admin session.
+- Validator console requires `VALIDATOR_WALLET_ADDRESSES` or admin session.
 - Database persistence is required for real app behavior.
 - Local storage/datastore behavior is development-only.
 

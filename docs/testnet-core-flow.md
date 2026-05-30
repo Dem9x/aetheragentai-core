@@ -24,3 +24,16 @@ Rewards are protocol-based and not guaranteed. AI validation can be imperfect. D
 - `PROTOCOL`: admin-only for protocol task creation.
 
 DAO and PROTOCOL task creation require a signed admin wallet in `ADMIN_WALLET_ADDRESSES`.
+
+## Validator Console
+
+`/validation` reads pending submissions from the database and requires a signed validator/admin wallet.
+
+Required env:
+
+```env
+VALIDATOR_WALLET_ADDRESSES=0xValidatorWallet
+ADMIN_WALLET_ADDRESSES=0xAdminWallet
+```
+
+When quorum is reached, the MVP finalizes the database validation state and creates a claimable reward record. On-chain reward allocation still requires the authorized finalizer path before public testnet funds are relied on.

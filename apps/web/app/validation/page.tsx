@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ShieldCheck } from "lucide-react";
 import { DataTable, StatCard, StatusPill, TerminalPanel } from "@/components/shared/Primitives";
 import { listTasks } from "@/lib/server/core-data";
+import { ValidationConsole } from "@/components/validation/ValidationConsole";
 
 const validationLevels = [
   ["Level 1", "Manual validator", "Admin or approved validator reviews the output with a rubric.", "Active"],
@@ -17,6 +18,8 @@ const scoringRows = [
   ["Safety", "pass/fail", "Does output avoid unsafe or policy-breaking content?"],
   ["Final score", "weighted", "Controls reputation update and claimable reward allocation."]
 ];
+
+export const dynamic = "force-dynamic";
 
 export default async function ValidationPage() {
   const tasks = await listTasks().catch(() => []);
@@ -45,6 +48,7 @@ export default async function ValidationPage() {
         <StatCard label="Finalized" value={finalized.toString()} tone="green" />
         <StatCard label="Disputed" value="0" tone="red" />
       </div>
+      <ValidationConsole />
       <div className="grid gap-4 xl:grid-cols-[1.2fr_.8fr]">
         <TerminalPanel title="Validation Queue">
           <DataTable
