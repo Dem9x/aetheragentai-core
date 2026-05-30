@@ -3,7 +3,7 @@ import { ArrowRight, Bot, ShieldCheck, Zap } from "lucide-react";
 import { ClientRewardChart, PoIScoreGauge } from "@/components/charts/Charts";
 import { DataTable, StatCard, StatusPill, TerminalPanel } from "@/components/shared/Primitives";
 import { ActiveMiningTasksPanel, LiveLogStream, NetworkStatusPanel, RewardClaimPanel } from "@/components/terminal/TerminalWidgets";
-import { getNetworkOverview, listTasks } from "@/lib/server/core-data";
+import { getApiNetworkOverview, listApiTasks } from "@/lib/server/api-data";
 import { activeMvpFlow, phaseTwoFeatures } from "@/lib/product/features";
 import { formatInteger } from "@/lib/utils/format";
 import type { NetworkStats, Task } from "@/types";
@@ -33,8 +33,8 @@ const emptyStats: NetworkStats = {
 
 export default async function HomePage() {
   const [overview, tasks] = await Promise.all([
-    getNetworkOverview().catch(() => ({ stats: emptyStats, activity: [] })),
-    listTasks().catch(() => [] as Task[])
+    getApiNetworkOverview().catch(() => ({ stats: emptyStats, activity: [] })),
+    listApiTasks().catch(() => [] as Task[])
   ]);
 
   return (

@@ -1,8 +1,7 @@
-import { apiError, apiSuccess } from "@/lib/api/response";
+import { apiError } from "@/lib/api/response";
+import { apiBackendUnavailable, proxyToAetherApi } from "@/lib/server/aether-api";
 import { checkRateLimit, getClientIp } from "@/lib/server/rate-limit";
-import { prisma } from "@/lib/server/prisma";
 import { agentMetadataSchema } from "@/server/api/schemas";
-import { getMetadataStorage } from "@/server/storage/metadata";
 
 export async function POST(request: Request) {
   const rate = checkRateLimit(`agent-metadata:${getClientIp(request)}`, 20);
@@ -11,16 +10,22 @@ export async function POST(request: Request) {
   const parsed = agentMetadataSchema.safeParse(await request.json().catch(() => ({})));
   if (!parsed.success) return apiError("INVALID_AGENT_METADATA", "Invalid agent metadata", 422, parsed.error.flatten());
 
-  const stored = await getMetadataStorage().put("agent", parsed.data);
-  const agent = await prisma.agent.create({
-    data: {
-      ownerAddress: parsed.data.ownerAddress.toLowerCase(),
-      metadataURI: stored.metadataURI,
-      metadataHash: stored.metadataHash,
-      name: parsed.data.name,
-      agentType: parsed.data.agentType
-    }
-  });
-
-  return apiSuccess({ agent, metadataURI: stored.metadataURI, metadataHash: stored.metadataHash }, { status: 201 });
+  try {
+    return await proxyToAetherApi(request, "/agents", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-dev-wallet-address": parsed.data.ownerAddress
+      },
+      body: JSON.stringify({
+        ownerAddress: parsed.data.ownerAddress,
+        name: parsed.data.name,
+        description: parsed.data.description,
+        agentType: parsed.data.agentType,
+        metadata: parsed.data
+      })
+    });
+  } catch (error) {
+    return apiBackendUnavailable(error);
+  }
 }

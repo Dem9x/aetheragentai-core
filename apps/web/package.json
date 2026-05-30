@@ -8,13 +8,9 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "check": "npm run typecheck && npm run lint && npm run build",
-    "db:generate": "prisma generate",
-    "db:migrate": "prisma migrate dev",
-    "db:deploy": "prisma migrate deploy"
+    "check": "npm run typecheck && npm run lint && npm run build"
   },
   "dependencies": {
-    "@prisma/client": "^6.19.0",
     "@tailwindcss/postcss": "latest",
     "@tanstack/react-query": "^5.100.10",
     "bullmq": "^5.76.8",
@@ -23,7 +19,7 @@
     "ioredis": "^5.10.1",
     "jose": "^6.2.3",
     "lucide-react": "latest",
-    "next": "latest",
+    "next": "^16.2.6",
     "pino": "^10.3.1",
     "react": "latest",
     "react-dom": "latest",
@@ -42,7 +38,6 @@
     "@types/react-dom": "latest",
     "eslint": "latest",
     "eslint-config-next": "latest",
-    "prisma": "^6.19.0",
     "typescript": "latest"
   },
   "overrides": {

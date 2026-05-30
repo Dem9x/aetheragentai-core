@@ -1,8 +1,8 @@
 import { apiSuccess } from "@/lib/api/response";
-import { listAgents } from "@/lib/server/core-data";
+import { listApiAgents } from "@/lib/server/api-data";
 
 export async function GET() {
-  const agents = await listAgents().catch(() => []);
+  const agents = await listApiAgents().catch(() => []);
   return apiSuccess({
     leaderboard: agents
       .sort((a, b) => b.poiScore - a.poiScore)

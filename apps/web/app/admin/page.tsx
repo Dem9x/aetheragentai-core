@@ -117,7 +117,7 @@ export default function AdminPage() {
       </div>
       {overview && !overview.env.databaseConfigured ? (
         <div className="border border-amber-300/25 bg-amber-300/8 p-3 font-mono text-xs text-amber-200">
-          DATABASE_URL is not configured. Real app data is unavailable; start Postgres and set DATABASE_URL for indexed production data.
+          The Prisma/PostgreSQL admin indexer is disabled. Core MVP data now comes from apps/api via MongoDB.
         </div>
       ) : null}
 

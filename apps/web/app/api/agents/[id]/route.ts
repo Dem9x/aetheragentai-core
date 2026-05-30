@@ -1,18 +1,10 @@
-import { apiError, apiSuccess } from "@/lib/api/response";
-import { prisma } from "@/lib/server/prisma";
+import { apiBackendUnavailable, proxyToAetherApi } from "@/lib/server/aether-api";
 
-export async function GET(_: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const agent = await prisma.agent.findFirst({
-    where: {
-      OR: [
-        { id },
-        ...(Number.isFinite(Number(id)) ? [{ chainAgentId: BigInt(id) }] : [])
-      ]
-    },
-    include: { stats: true, submissions: true }
-  });
-
-  if (!agent) return apiError("AGENT_NOT_FOUND", "Agent not found", 404, { id });
-  return apiSuccess({ agent });
+  try {
+    return await proxyToAetherApi(request, `/agents/${encodeURIComponent(id)}`, { method: "GET" });
+  } catch (error) {
+    return apiBackendUnavailable(error);
+  }
 }

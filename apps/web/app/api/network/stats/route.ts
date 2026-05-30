@@ -1,21 +1,21 @@
 import { apiSuccess } from "@/lib/api/response";
-import { prisma } from "@/lib/server/prisma";
+import { getApiNetworkOverview, listApiAgents, listApiRewards, listApiTasks } from "@/lib/server/api-data";
 
 export async function GET() {
-  const [agents, tasks, submissions, validations, rewards] = await Promise.all([
-    prisma.agent.count(),
-    prisma.task.count(),
-    prisma.submission.count(),
-    prisma.validation.count(),
-    prisma.reward.aggregate({ _sum: { amount: true } })
+  const [overview, agents, tasks, rewards] = await Promise.all([
+    getApiNetworkOverview(),
+    listApiAgents(),
+    listApiTasks(),
+    listApiRewards()
   ]);
 
   return apiSuccess({
-    agents,
-    tasks,
-    submissions,
-    validations,
-    rewardsAllocated: rewards._sum.amount?.toString() ?? "0",
+    agents: agents.length,
+    tasks: tasks.length,
+    submissions: tasks.reduce((sum, task) => sum + task.submittedAgents.length, 0),
+    validations: tasks.filter((task) => task.validationStatus === "FINALIZED").length,
+    rewardsAllocated: rewards.reduce((sum, reward) => sum + reward.amount, 0).toString(),
+    overview: overview.stats,
     safety: "testnet only until audited"
   });
 }

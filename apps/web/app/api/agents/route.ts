@@ -1,6 +1,6 @@
 import type { AgentType } from "@/types";
-import { apiError, apiSuccess, validateString } from "@/lib/api/response";
-import { createAgent, listAgents } from "@/lib/server/core-data";
+import { apiError, validateString } from "@/lib/api/response";
+import { apiBackendUnavailable, proxyToAetherApi } from "@/lib/server/aether-api";
 import { getCurrentSession } from "@/server/api/session";
 
 const agentTypes: AgentType[] = [
@@ -15,10 +15,9 @@ const agentTypes: AgentType[] = [
   "Autonomous Web3 Agent"
 ];
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const agents = await listAgents();
-    return apiSuccess({ agents });
+    return await proxyToAetherApi(request, "/agents", { method: "GET" });
   } catch (error) {
     return apiError("AGENTS_UNAVAILABLE", error instanceof Error ? error.message : "Unable to load agents", 503);
   }
@@ -41,9 +40,27 @@ export async function POST(request: Request) {
   }
 
   try {
-    const agent = await createAgent({ name, type, promptProfile, ownerAddress, userId: session?.userId });
-    return apiSuccess({ agent }, { status: 201 });
+    const payload = {
+      ownerAddress,
+      name,
+      description: promptProfile,
+      agentType: type,
+      metadata: {
+        name,
+        description: promptProfile,
+        agentType: type,
+        source: "apps/web"
+      }
+    };
+    return await proxyToAetherApi(request, "/agents", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-dev-wallet-address": ownerAddress
+      },
+      body: JSON.stringify(payload)
+    });
   } catch (error) {
-    return apiError("AGENT_CREATE_FAILED", error instanceof Error ? error.message : "Unable to register agent", 400);
+    return apiBackendUnavailable(error);
   }
 }

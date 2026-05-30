@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "workspaces": [
+    "apps/api",
     "apps/web",
     "packages/agent-cli"
   ],
@@ -13,10 +14,10 @@
     "lint": "npm run lint -w @aetheragentai/web",
     "typecheck": "npm run typecheck -w @aetheragentai/web",
     "check": "npm run check -w @aetheragentai/web",
+    "api:dev": "npm run dev -w @aetheragentai/api",
+    "api:start": "npm run start -w @aetheragentai/api",
+    "api:lint": "npm run lint -w @aetheragentai/api",
     "audit": "npm audit --audit-level=moderate",
-    "db:generate": "npm run db:generate -w @aetheragentai/web",
-    "db:migrate": "npm run db:migrate -w @aetheragentai/web",
-    "db:deploy": "npm run db:deploy -w @aetheragentai/web",
     "contracts:install": "npm install --prefix packages/contracts",
     "contracts:compile": "npm run compile --prefix packages/contracts",
     "contracts:test": "npm run test --prefix packages/contracts",
@@ -26,9 +27,15 @@
     "cli:doctor": "node packages/agent-cli/index.mjs doctor --json",
     "cli:help": "node packages/agent-cli/index.mjs --help",
     "cli:test": "npm test -w @aetheragentai/agent-cli",
-    "demo:runner": "node packages/agent-cli/examples/demo-runner.mjs"
+    "demo:runner": "node packages/agent-cli/examples/demo-runner.mjs",
+    "runner:openclaw": "bash packages/agent-cli/examples/run-openclaw-vps.sh .env.openclaw-runner",
+    "runner:openclaw:once": "aether run --once --json"
   },
   "engines": {
     "node": ">=20"
+  },
+  "dependencies": {
+    "axios": "^1.16.1",
+    "node-pty": "^1.1.0"
   }
 }

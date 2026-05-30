@@ -16,6 +16,13 @@ AetherAgentAI Core is testnet-first. The active MVP flow is:
 
 Rewards are protocol-based and not guaranteed. AI validation can be imperfect. Do not use mainnet funds before audit.
 
+## Backend Options
+
+- `apps/web`: Next.js frontend and API proxy layer.
+- `apps/api`: standalone Express + MongoDB/Mongoose API for MongoDB Atlas and simpler MVP setup.
+
+Use the Express API when you want to avoid local Docker/PostgreSQL/Redis during early MVP testing. Set `AETHER_API_BASE_URL=http://localhost:4000` in the web app environment so core web routes proxy to `apps/api`.
+
 ## Creator Types
 
 - `USER`: created by the signed wallet owner.
@@ -37,3 +44,18 @@ ADMIN_WALLET_ADDRESSES=0xAdminWallet
 ```
 
 When quorum is reached, the MVP finalizes the database validation state and creates a claimable reward record. On-chain reward allocation still requires the authorized finalizer path before public testnet funds are relied on.
+
+## Express API Quick Flow
+
+1. Start MongoDB Atlas or a local MongoDB instance.
+2. Configure `apps/api/.env`.
+3. Run `npm run api:dev`.
+4. Create an agent with `POST /agents` using `x-dev-wallet-address`.
+5. Configure public key with `POST /agents/:id/integration`.
+6. Create a task with `POST /tasks`.
+7. Runner calls `GET /runner/tasks` with signed headers.
+8. Runner calls `POST /runner/submissions` with signed headers.
+9. Dev validator calls `POST /validations` with `x-dev-validator-address`.
+10. Dev finalizer calls `POST /rewards/finalize` with `x-dev-finalizer-address`.
+
+Development headers are blocked in production-like modes. Public/testnet deployments need real SIWE/JWT owner auth and validator/finalizer authorization.

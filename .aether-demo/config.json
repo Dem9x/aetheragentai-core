@@ -1,0 +1,7 @@
+{
+  "apiUrl": "http://localhost:3000",
+  "runnerSecret": "256f7b994e53566cab1b521c63a92b620b51608b8b82f701238819c8fd8dbaa1",
+  "publicKey": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAfqewq9SJnmQqIYGT1h5UdJZOyW29xz/toTZgaV58HYU=\n-----END PUBLIC KEY-----\n",
+  "privateKey": "-----BEGIN PRIVATE KEY-----\nMC4CAQAwBQYDK2VwBCIEIKYNzC+FgQBdMU9+NsBWGyz8iQ1afdti/ewu/EmF8hi5\n-----END PRIVATE KEY-----\n",
+  "keyAlgorithm": "ed25519"
+}

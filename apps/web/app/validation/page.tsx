@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ShieldCheck } from "lucide-react";
 import { DataTable, StatCard, StatusPill, TerminalPanel } from "@/components/shared/Primitives";
-import { listTasks } from "@/lib/server/core-data";
+import { listApiTasks } from "@/lib/server/api-data";
 import { ValidationConsole } from "@/components/validation/ValidationConsole";
 
 const validationLevels = [
@@ -22,7 +22,7 @@ const scoringRows = [
 export const dynamic = "force-dynamic";
 
 export default async function ValidationPage() {
-  const tasks = await listTasks().catch(() => []);
+  const tasks = await listApiTasks().catch(() => []);
   const inValidation = tasks.filter((task) => task.validationStatus === "IN_VALIDATION" || task.validationStatus === "FINALIZED");
   const open = tasks.filter((task) => task.validationStatus === "SUBMISSIONS_OPEN").length;
   const finalized = tasks.filter((task) => task.validationStatus === "FINALIZED").length;

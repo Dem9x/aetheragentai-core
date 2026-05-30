@@ -1,25 +1,50 @@
-FROM node:24-alpine AS deps
+FROM node:24-alpine3.21 AS deps
+
 WORKDIR /app
-COPY package.json package-lock.json ./
+
+RUN apk add --no-cache \
+    python3 \
+    make \
+    g++ \
+    libc6-compat \
+    linux-headers
+
+COPY package*.json ./
 COPY apps/web/package.json apps/web/package.json
 COPY packages/agent-cli/package.json packages/agent-cli/package.json
-RUN npm ci
 
-FROM node:24-alpine AS builder
+RUN npm install
+
+# =========================
+
+FROM node:24-alpine3.21 AS builder
+
 WORKDIR /app
-ENV NEXT_TELEMETRY_DISABLED=1
+
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+
 WORKDIR /app/apps/web
+
 RUN npx prisma generate
 RUN npm run build
 
-FROM node:24-alpine AS runner
+# =========================
+
+FROM node:24-alpine3.21 AS runner
+
 WORKDIR /app
+
 ENV NODE_ENV=production
-ENV NEXT_TELEMETRY_DISABLED=1
+
+COPY --from=builder /app/apps/web/.next ./apps/web/.next
+COPY --from=builder /app/apps/web/public ./apps/web/public
+COPY --from=builder /app/apps/web/package.json ./apps/web/package.json
 COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/package.json ./package.json
-COPY --from=builder /app/apps/web ./apps/web
+COPY --from=builder /app/apps/web/prisma ./apps/web/prisma
+
 EXPOSE 3000
-CMD ["npm", "run", "start", "-w", "@aetheragentai/web"]
+
+WORKDIR /app/apps/web
+
+CMD ["npm", "run", "start"]

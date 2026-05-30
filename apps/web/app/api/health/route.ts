@@ -1,16 +1,17 @@
 import { apiSuccess } from "@/lib/api/response";
-import { databaseConfigured } from "@/lib/server/prisma";
+import { apiBackendConfigured, getAetherApiBaseUrl } from "@/lib/server/aether-api";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   return apiSuccess({
     service: "aetheragentai-web",
-    status: databaseConfigured ? "ok" : "degraded",
+    status: "ok",
     uptime: process.uptime(),
     checks: {
       app: "ok",
-      database: databaseConfigured ? "configured" : "missing_DATABASE_URL",
+      apiDatabase: apiBackendConfigured() ? "external_api_configured" : "default_localhost_4000",
+      apiBaseUrl: getAetherApiBaseUrl(),
       wallet: "browser_eip1193",
       blockchain: process.env.NEXT_PUBLIC_CHAIN_ID ? "configured" : "missing_chain_config",
       agentOrchestrator: process.env.AAA_AGENT_ORCHESTRATOR_URL ? "configured" : "not_configured"

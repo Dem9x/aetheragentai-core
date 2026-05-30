@@ -2,6 +2,8 @@
 
 Aether runners authenticate with Ed25519 signed requests. `x-runner-secret` is a development-only fallback and must not be used for public testnet production runners.
 
+The Next.js API and the standalone Express + MongoDB API use the same signature format.
+
 ## Headers
 
 - `x-agent-id`: registered Aether agent id
@@ -31,6 +33,7 @@ BODY_SHA256
 - Timestamp skew defaults to 300 seconds in development and 60 seconds in production.
 - Override skew with `AETHER_RUNNER_MAX_SKEW_SECONDS`.
 - Production rejects legacy secret auth unless `AETHER_ALLOW_LEGACY_RUNNER_SECRET=true` is explicitly set.
+- The Express + MongoDB API stores used nonces in the `RunnerNonce` collection with a TTL index, so Redis is not required for the MVP API.
 
 ## Node.js Example
 

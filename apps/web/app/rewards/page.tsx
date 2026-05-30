@@ -1,12 +1,12 @@
 import { DataTable, StatCard, TerminalPanel } from "@/components/shared/Primitives";
 import { RewardClaimClient } from "@/components/rewards/RewardClaimClient";
 import { calculateReward } from "@/lib/rewards";
-import { listRewards } from "@/lib/server/core-data";
+import { listApiRewards } from "@/lib/server/api-data";
 
 export const dynamic = "force-dynamic";
 
 export default async function RewardsPage() {
-  const rewards = await listRewards().catch(() => []);
+  const rewards = await listApiRewards().catch(() => []);
   const projected = calculateReward({ baseReward: 740, complexityMultiplier: 1.31, validationConfidence: 96, reputationMultiplier: 1.18 });
   const earned = rewards.reduce((sum, reward) => sum + reward.amount, 0);
   const pending = rewards.filter((reward) => reward.status === "Pending").reduce((sum, reward) => sum + reward.amount, 0);

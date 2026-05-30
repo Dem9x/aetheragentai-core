@@ -1,10 +1,9 @@
-import { apiError, apiSuccess } from "@/lib/api/response";
+import { apiError } from "@/lib/api/response";
+import { apiBackendUnavailable, proxyToAetherApi } from "@/lib/server/aether-api";
 import { checkRateLimit, getClientIp } from "@/lib/server/rate-limit";
-import { createTask } from "@/lib/server/core-data";
 import { taskMetadataSchema } from "@/server/api/schemas";
 import { requireAdminSession } from "@/server/api/admin";
 import { getCurrentSession } from "@/server/api/session";
-import { getMetadataStorage } from "@/server/storage/metadata";
 
 export async function POST(request: Request) {
   const rate = checkRateLimit(`task-metadata:${getClientIp(request)}`, 20);
@@ -29,28 +28,16 @@ export async function POST(request: Request) {
     return apiError("OWNER_MISMATCH", "creatorAddress must match the signed-in wallet for USER or DEVELOPER tasks.", 403);
   }
 
-  const metadata = {
-    ...parsed.data,
-    creatorAddress: session.address.toLowerCase()
-  };
-  const stored = await getMetadataStorage().put("task", metadata);
-  const task = await createTask({
-    creatorType,
-    creatorName: parsed.data.creatorName,
-    creatorAddress: session.address,
-    creatorLabel: parsed.data.creatorLabel,
-    metadataURI: stored.metadataURI,
-    metadataHash: stored.metadataHash,
-    title: parsed.data.title,
-    category: parsed.data.category,
-    rewardAmount: parsed.data.rewardAmount,
-    rewardToken: parsed.data.rewardToken,
-    fundingStatus: parsed.data.fundingStatus,
-    deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-    validationMethod: parsed.data.validationMethod,
-    requiredValidatorQuorum: parsed.data.requiredValidatorQuorum,
-    passingScore: parsed.data.passingScore
-  });
-
-  return apiSuccess({ task, metadataURI: stored.metadataURI, metadataHash: stored.metadataHash }, { status: 201 });
+  try {
+    return await proxyToAetherApi(request, "/tasks", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-dev-wallet-address": session.address
+      },
+      body: JSON.stringify({ ...parsed.data, metadata: parsed.data, creatorAddress: session.address.toLowerCase() })
+    });
+  } catch (error) {
+    return apiBackendUnavailable(error);
+  }
 }
